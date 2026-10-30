@@ -28,6 +28,8 @@ export default defineConfig({
         "@emotion/styled",
         "@mui/icons-material",
         "@mui/material",
+        "echarts",
+        "echarts-for-react",
       ],
     },
     sourcemap: true,

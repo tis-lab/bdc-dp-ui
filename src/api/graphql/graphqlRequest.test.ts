@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { graphqlRequest } from "./graphqlRequest";
 
 // A test-only operation and endpoint; the helper is schema-agnostic.
@@ -23,14 +22,14 @@ function echo(signal?: AbortSignal) {
 }
 
 function mockResponse(body: unknown, status = 200) {
-  return vi
+  return jest
     .spyOn(globalThis, "fetch")
     .mockResolvedValue(new Response(JSON.stringify(body), { status }));
 }
 
 describe("graphqlRequest", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   it("returns data from a successful response", async () => {
@@ -59,7 +58,10 @@ describe("graphqlRequest", () => {
   });
 
   it("throws the messages from errors[]", async () => {
-    mockResponse({ data: null, errors: [{ message: "Bad input" }, { message: "Also bad" }] });
+    mockResponse({
+      data: null,
+      errors: [{ message: "Bad input" }, { message: "Also bad" }],
+    });
 
     await expect(echo()).rejects.toThrow("Bad input; Also bad");
   });
@@ -77,17 +79,21 @@ describe("graphqlRequest", () => {
   });
 
   it("propagates a network failure", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+    jest
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValue(new TypeError("Failed to fetch"));
 
     await expect(echo()).rejects.toThrow("Failed to fetch");
   });
 
   it("passes the signal to fetch and propagates an abort", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+    const fetchSpy = jest.spyOn(globalThis, "fetch").mockImplementation(
       (_url, init) =>
         new Promise((_resolve, reject) => {
           init?.signal?.addEventListener("abort", () =>
-            reject(new DOMException("The operation was aborted.", "AbortError")),
+            reject(
+              new DOMException("The operation was aborted.", "AbortError"),
+            ),
           );
         }),
     );

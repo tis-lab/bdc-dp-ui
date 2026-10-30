@@ -1,15 +1,20 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
 import CohortSnapshot from "./CohortSnapshot";
-import { t2dFemaleSummary, t2dSummary } from "../../mocks/SYNTHETIC.cohortSummary";
+import {
+  t2dFemaleSummary,
+  t2dSummary,
+} from "../../mocks/SYNTHETIC.cohortSummary";
 
-// test-setup.ts stubs ECharts to list each slice as "name: value"
+// jest.config.js maps echarts-for-react to src/test/echartsStub.tsx,
+// which lists each slice as "name: value"
 
 const AVAILABLE = 5000;
 
 describe("CohortSnapshot", () => {
   it("is a labelled panel with its subtitle", () => {
-    render(<CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />);
+    render(
+      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+    );
 
     expect(
       screen.getByRole("region", { name: "Cohort Snapshot" }),
@@ -48,15 +53,16 @@ describe("CohortSnapshot", () => {
     expect(
       screen.getByRole("progressbar", { name: "Loading cohort snapshot" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Cohort Snapshot" })).toHaveAttribute(
-      "aria-busy",
-      "true",
-    );
+    expect(
+      screen.getByRole("region", { name: "Cohort Snapshot" }),
+    ).toHaveAttribute("aria-busy", "true");
     expect(screen.queryByText("5,000")).toBeNull();
   });
 
   it("shows the participants summed across studies, out of those available", () => {
-    render(<CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />);
+    render(
+      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+    );
 
     // 480 + 460
     expect(screen.getByText("940")).toBeInTheDocument();
@@ -65,23 +71,31 @@ describe("CohortSnapshot", () => {
   });
 
   it("draws the cohort against the rest of those available", () => {
-    render(<CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />);
+    render(
+      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+    );
 
     expect(screen.getByText("In cohort: 940")).toBeInTheDocument();
     expect(screen.getByText("Not in cohort: 4060")).toBeInTheDocument();
   });
 
   it("shows the number of studies in the response", () => {
-    render(<CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />);
+    render(
+      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+    );
 
     expect(screen.getByText("Studies:").textContent).toBe("Studies: 2");
   });
 
   it("notes that the count is an estimate", () => {
-    render(<CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />);
+    render(
+      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+    );
 
     expect(
-      screen.getByText("Participant count is estimated until query is executed"),
+      screen.getByText(
+        "Participant count is estimated until query is executed",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -91,7 +105,10 @@ describe("CohortSnapshot", () => {
     );
 
     rerender(
-      <CohortSnapshot summary={t2dFemaleSummary} availableParticipants={AVAILABLE} />,
+      <CohortSnapshot
+        summary={t2dFemaleSummary}
+        availableParticipants={AVAILABLE}
+      />,
     );
 
     // 230 + 250

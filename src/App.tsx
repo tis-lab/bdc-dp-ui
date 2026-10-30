@@ -1,5 +1,10 @@
-import { Typography } from "@mui/material";
+import { Container } from "@mui/material";
+import CohortBuilder from "./containers/CohortBuilder";
 
 export default function App() {
-  return <Typography variant="h1">Hello World</Typography>;
+  return (
+    <Container maxWidth="lg">
+      <CohortBuilder />
+    </Container>
+  );
 }

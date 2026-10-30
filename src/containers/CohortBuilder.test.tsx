@@ -1,15 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import CohortBuilder from "./CohortBuilder";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
 import { AVAILABLE_PARTICIPANTS_PLACEHOLDER } from "../placeholders";
 
+const ORIGINAL_ENV = process.env;
 const AVAILABLE = AVAILABLE_PARTICIPANTS_PLACEHOLDER.toLocaleString();
 
-const hypertension: SearchItem = {
+const mockHypertension: SearchItem = {
   __typename: "Term",
   id: "HP:0000822",
   label: "Hypertension",
@@ -19,10 +19,16 @@ const hypertension: SearchItem = {
   bdc: { studyCount: 0, studies: [], variableNames: [] },
 };
 
-const diabetes: SearchItem = { ...hypertension, id: "MONDO:0005148", label: "Diabetes" };
+const mockDiabetes: SearchItem = {
+  ...mockHypertension,
+  id: "MONDO:0005148",
+  label: "Diabetes",
+};
 
-// Search has its own tests; this stub only reports clicks
-vi.mock("./Search", () => ({
+// Search has its own tests; this stub only reports clicks.
+// jest.mock factories may only use outside variables named mock*.
+jest.mock("./Search", () => ({
+  __esModule: true,
   default: ({
     onInclude,
     onExclude,
@@ -31,16 +37,25 @@ vi.mock("./Search", () => ({
     onExclude: (item: SearchItem) => void;
   }) => (
     <div>
-      <button onClick={() => onInclude(hypertension)}>include result</button>
-      <button onClick={() => onExclude(hypertension)}>exclude result</button>
-      <button onClick={() => onInclude(diabetes)}>include other result</button>
+      <button onClick={() => onInclude(mockHypertension)}>
+        include result
+      </button>
+      <button onClick={() => onExclude(mockHypertension)}>
+        exclude result
+      </button>
+      <button onClick={() => onInclude(mockDiabetes)}>
+        include other result
+      </button>
     </div>
   ),
 }));
 
 beforeEach(() => {
-  vi.stubEnv("VITE_GRAPHQL_URL", "https://graphql.test/graphql");
-  vi.spyOn(globalThis, "fetch").mockImplementation(
+  process.env = {
+    ...ORIGINAL_ENV,
+    VITE_GRAPHQL_URL: "https://graphql.test/graphql",
+  };
+  jest.spyOn(globalThis, "fetch").mockImplementation(
     async () =>
       new Response(JSON.stringify({ data: { summary: t2dSummary } }), {
         status: 200,
@@ -49,12 +64,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.restoreAllMocks();
+  process.env = ORIGINAL_ENV;
+  jest.restoreAllMocks();
 });
 
 function renderBuilder() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={client}>
       <CohortBuilder />
@@ -69,7 +86,9 @@ describe("CohortBuilder", () => {
   it("renders the search and the cohort snapshot", () => {
     renderBuilder();
 
-    expect(screen.getByRole("button", { name: "include result" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "include result" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Cohort Snapshot" }),
     ).toBeInTheDocument();
@@ -80,7 +99,9 @@ describe("CohortBuilder", () => {
 
     const criteria = screen.getByRole("region", { name: "Cohort Criteria" });
     expect(criteria).toHaveTextContent("0 criteria");
-    expect(within(criteria).getByText("No criteria added yet")).toBeInTheDocument();
+    expect(
+      within(criteria).getByText("No criteria added yet"),
+    ).toBeInTheDocument();
     expect(querySection("Include")).toBeNull();
     expect(querySection("Exclude")).toBeNull();
   });
@@ -91,12 +112,15 @@ describe("CohortBuilder", () => {
 
     await user.click(screen.getByRole("button", { name: "include result" }));
 
-    expect(within(querySection("Include")!).getByText("Hypertension")).toBeInTheDocument();
-    expect(within(querySection("Exclude")!).getByText("No exclusion criteria added"))
-      .toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Cohort Criteria" })).toHaveTextContent(
-      "1 criterion",
-    );
+    expect(
+      within(querySection("Include")!).getByText("Hypertension"),
+    ).toBeInTheDocument();
+    expect(
+      within(querySection("Exclude")!).getByText("No exclusion criteria added"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Cohort Criteria" }),
+    ).toHaveTextContent("1 criterion");
   });
 
   it("does not add the same concept twice", async () => {
@@ -106,7 +130,9 @@ describe("CohortBuilder", () => {
     await user.click(screen.getByRole("button", { name: "include result" }));
     await user.click(screen.getByRole("button", { name: "include result" }));
 
-    expect(within(querySection("Include")!).getAllByText("Hypertension")).toHaveLength(1);
+    expect(
+      within(querySection("Include")!).getAllByText("Hypertension"),
+    ).toHaveLength(1);
   });
 
   it("moves a concept when it is excluded after being included", async () => {
@@ -116,9 +142,12 @@ describe("CohortBuilder", () => {
     await user.click(screen.getByRole("button", { name: "include result" }));
     await user.click(screen.getByRole("button", { name: "exclude result" }));
 
-    expect(within(querySection("Include")!).getByText("No inclusion criteria added"))
-      .toBeInTheDocument();
-    expect(within(querySection("Exclude")!).getByText("Hypertension")).toBeInTheDocument();
+    expect(
+      within(querySection("Include")!).getByText("No inclusion criteria added"),
+    ).toBeInTheDocument();
+    expect(
+      within(querySection("Exclude")!).getByText("Hypertension"),
+    ).toBeInTheDocument();
   });
 
   it("removes a concept, showing the empty state again", async () => {
@@ -137,7 +166,9 @@ describe("CohortBuilder", () => {
       renderBuilder();
 
       expect(screen.getByText(AVAILABLE)).toBeInTheDocument();
-      expect(screen.getByText("Include a concept to see its demographic breakdown.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Include a concept to see its demographic breakdown."),
+      ).toBeInTheDocument();
       expect(globalThis.fetch).not.toHaveBeenCalled();
     });
 
@@ -150,9 +181,11 @@ describe("CohortBuilder", () => {
       // 940 from the API, plus the placeholder's 50 for one include
       expect(await screen.findByText("990")).toBeInTheDocument();
       expect(screen.getByText(`of ${AVAILABLE} available`)).toBeInTheDocument();
-      expect(screen.getByText("990 participants · 2 studies")).toBeInTheDocument();
+      expect(
+        screen.getByText("990 participants · 2 studies"),
+      ).toBeInTheDocument();
       const body = JSON.parse(
-        vi.mocked(globalThis.fetch).mock.calls[0][1]?.body as string,
+        jest.mocked(globalThis.fetch).mock.calls[0][1]?.body as string,
       );
       expect(body.variables).toEqual({
         sourceId: "t2d",
@@ -167,21 +200,21 @@ describe("CohortBuilder", () => {
 
       await user.click(screen.getByRole("button", { name: "include result" }));
       await screen.findByText("990");
-      expect(screen.queryByRole("group", { name: "Inclusion logic" })).toBeNull();
+      expect(
+        screen.queryByRole("group", { name: "Inclusion logic" }),
+      ).toBeNull();
 
-      await user.click(screen.getByRole("button", { name: "include other result" }));
+      await user.click(
+        screen.getByRole("button", { name: "include other result" }),
+      );
       const match = screen.getByRole("group", { name: "Inclusion logic" });
       expect(
-        screen.getByText("Counts are illustrative until the summary API supports AND/OR."),
-      ).toBeInTheDocument();
-      expect(within(match).getByRole("button", { name: "All criteria AND" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
+        within(match).getByRole("button", { name: "All" }),
+      ).toHaveAttribute("aria-pressed", "true");
       // Placeholder counts: 940 from the API, narrowed by AND, widened by OR
       expect(await screen.findByText("940")).toBeInTheDocument();
 
-      await user.click(within(match).getByRole("button", { name: "Any criterion OR" }));
+      await user.click(within(match).getByRole("button", { name: "Any" }));
       expect(await screen.findByText("1,040")).toBeInTheDocument();
     });
 

@@ -23,11 +23,13 @@ export const ConceptCardRoot = styled(Card, {
   }),
 }));
 
-export const ConceptCardBody = styled(CardContent)(({ theme }) => ({
-  padding: theme.spacing(2),
+export const ConceptCardBody = styled(CardContent, {
+  shouldForwardProp: (prop) => prop !== "compact",
+})<{ compact: boolean }>(({ theme, compact }) => ({
+  padding: theme.spacing(compact ? 1 : 2, 2),
   // CardContent adds extra bottom padding to its last child by default
   "&:last-child": {
-    paddingBottom: theme.spacing(2),
+    paddingBottom: theme.spacing(compact ? 1 : 2),
   },
 }));
 

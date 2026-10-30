@@ -28,7 +28,6 @@ const CRITERIA_LABELS = [
 ] as const;
 
 interface Props {
-  onSearch?: (text: string) => void;
   onInclude?: (item: SearchItem) => void;
   onExclude?: (item: SearchItem) => void;
   /** Results already in a list show it, and clicking that button again takes them out. */
@@ -37,7 +36,6 @@ interface Props {
 }
 
 export default function Search({
-  onSearch,
   onInclude,
   onExclude,
   criteria,
@@ -124,7 +122,6 @@ export default function Search({
   const handleSearch = (text: string) => {
     setSubmitted(text);
     setPage(1);
-    onSearch?.(text);
   };
 
   const handleChange = (text: string, reason: string) => {

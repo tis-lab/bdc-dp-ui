@@ -1,16 +1,21 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect } from "vitest";
 import Demographics from "./Demographics";
-import { t2dFemaleSummary, t2dSummary } from "../../mocks/SYNTHETIC.cohortSummary";
+import {
+  t2dFemaleSummary,
+  t2dSummary,
+} from "../../mocks/SYNTHETIC.cohortSummary";
 
-// test-setup.ts stubs ECharts to list each bar as "name: value"
+// jest.config.js maps echarts-for-react to src/test/echartsStub.tsx,
+// which lists each bar as "name: value"
 
 describe("Demographics", () => {
   it("prompts for criteria, with no tabs, before there is a cohort", () => {
     render(<Demographics />);
 
-    expect(screen.getByText("Include a concept to see its demographic breakdown.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Include a concept to see its demographic breakdown."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("tab")).toBeNull();
   });
 
@@ -23,9 +28,13 @@ describe("Demographics", () => {
   });
 
   it("shows an error, not the counts, when the request fails", () => {
-    render(<Demographics summary={t2dSummary} error={new Error("Network down")} />);
+    render(
+      <Demographics summary={t2dSummary} error={new Error("Network down")} />,
+    );
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load demographics.");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn't load demographics.",
+    );
     expect(screen.queryByText("940 participants · 2 studies")).toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
   });
@@ -36,7 +45,9 @@ describe("Demographics", () => {
     expect(
       screen.getByRole("region", { name: "Demographics" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("940 participants · 2 studies")).toBeInTheDocument();
+    expect(
+      screen.getByText("940 participants · 2 studies"),
+    ).toBeInTheDocument();
   });
 
   it("shows sex by default", () => {
@@ -68,6 +79,8 @@ describe("Demographics", () => {
 
     await user.click(screen.getByRole("tab", { name: "Ethnicity" }));
 
-    expect(screen.getByText("Not reported for this cohort.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Not reported for this cohort."),
+    ).toBeInTheDocument();
   });
 });

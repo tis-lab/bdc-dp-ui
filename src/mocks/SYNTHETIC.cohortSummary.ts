@@ -3,7 +3,6 @@
 // used only as fixed responses in tests; the app reads the summary API.
 import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
 
-
 /** Trimmed from schema/examples/SYNTHETIC.SummaryResponse-t2d.yaml. */
 export const t2dSummary: SummaryResponse = {
   studies: [
@@ -19,14 +18,14 @@ export const t2dSummary: SummaryResponse = {
             {
               id: "palette:demography/sex/FEMALE",
               sex: "FEMALE",
-              participant_count: 230
+              participant_count: 230,
             },
             {
               id: "palette:demography/sex/MALE",
               sex: "MALE",
-              participant_count: 245
-            }
-          ]
+              participant_count: 245,
+            },
+          ],
         },
         {
           id: "palette:demography/race",
@@ -35,33 +34,25 @@ export const t2dSummary: SummaryResponse = {
           values: [
             {
               id: "palette:demography/race/WHITE",
-              race: [
-                "WHITE"
-              ],
-              participant_count: 235
+              race: ["WHITE"],
+              participant_count: 235,
             },
             {
               id: "palette:demography/race/BLACK_OR_AFRICAN_AMERICAN",
-              race: [
-                "BLACK_OR_AFRICAN_AMERICAN"
-              ],
-              participant_count: 141
+              race: ["BLACK_OR_AFRICAN_AMERICAN"],
+              participant_count: 141,
             },
             {
               id: "palette:demography/race/ASIAN",
-              race: [
-                "ASIAN"
-              ],
-              participant_count: 47
+              race: ["ASIAN"],
+              participant_count: 47,
             },
             {
               id: "palette:demography/race/AMERICAN_INDIAN_OR_ALASKA_NATIVE",
-              race: [
-                "AMERICAN_INDIAN_OR_ALASKA_NATIVE"
-              ],
-              participant_count: 47
-            }
-          ]
+              race: ["AMERICAN_INDIAN_OR_ALASKA_NATIVE"],
+              participant_count: 47,
+            },
+          ],
         },
         {
           id: "palette:demography/ethnicity",
@@ -71,16 +62,16 @@ export const t2dSummary: SummaryResponse = {
             {
               id: "palette:demography/ethnicity/HISPANIC_OR_LATINO",
               ethnicity: "HISPANIC_OR_LATINO",
-              participant_count: 70
+              participant_count: 70,
             },
             {
               id: "palette:demography/ethnicity/NOT_HISPANIC_OR_LATINO",
               ethnicity: "NOT_HISPANIC_OR_LATINO",
-              participant_count: 410
-            }
-          ]
-        }
-      ]
+              participant_count: 410,
+            },
+          ],
+        },
+      ],
     },
     {
       research_study: "palette:study_two",
@@ -94,14 +85,14 @@ export const t2dSummary: SummaryResponse = {
             {
               id: "palette:demography/sex/FEMALE",
               sex: "FEMALE",
-              participant_count: 250
+              participant_count: 250,
             },
             {
               id: "palette:demography/sex/MALE",
               sex: "MALE",
-              participant_count: 205
-            }
-          ]
+              participant_count: 205,
+            },
+          ],
         },
         {
           id: "palette:demography/race",
@@ -110,33 +101,25 @@ export const t2dSummary: SummaryResponse = {
           values: [
             {
               id: "palette:demography/race/WHITE",
-              race: [
-                "WHITE"
-              ],
-              participant_count: 275
+              race: ["WHITE"],
+              participant_count: 275,
             },
             {
               id: "palette:demography/race/BLACK_OR_AFRICAN_AMERICAN",
-              race: [
-                "BLACK_OR_AFRICAN_AMERICAN"
-              ],
-              participant_count: 90
+              race: ["BLACK_OR_AFRICAN_AMERICAN"],
+              participant_count: 90,
             },
             {
               id: "palette:demography/race/MIDDLE_EASTERN_OR_NORTH_AFRICAN",
-              race: [
-                "MIDDLE_EASTERN_OR_NORTH_AFRICAN"
-              ],
-              participant_count: 45
+              race: ["MIDDLE_EASTERN_OR_NORTH_AFRICAN"],
+              participant_count: 45,
             },
             {
               id: "palette:demography/race/NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER",
-              race: [
-                "NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER"
-              ],
-              participant_count: 45
-            }
-          ]
+              race: ["NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER"],
+              participant_count: 45,
+            },
+          ],
         },
         {
           id: "palette:demography/ethnicity",
@@ -146,18 +129,18 @@ export const t2dSummary: SummaryResponse = {
             {
               id: "palette:demography/ethnicity/HISPANIC_OR_LATINO",
               ethnicity: "HISPANIC_OR_LATINO",
-              participant_count: 70
+              participant_count: 70,
             },
             {
               id: "palette:demography/ethnicity/NOT_HISPANIC_OR_LATINO",
               ethnicity: "NOT_HISPANIC_OR_LATINO",
-              participant_count: 390
-            }
-          ]
-        }
-      ]
-    }
-  ]
+              participant_count: 390,
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 /** Trimmed from schema/examples/SYNTHETIC.SummaryResponse-t2d-female.yaml. */
@@ -175,9 +158,9 @@ export const t2dFemaleSummary: SummaryResponse = {
             {
               id: "palette:demography/sex/FEMALE",
               sex: "FEMALE",
-              participant_count: 230
-            }
-          ]
+              participant_count: 230,
+            },
+          ],
         },
         {
           id: "palette:demography/race",
@@ -186,35 +169,27 @@ export const t2dFemaleSummary: SummaryResponse = {
           values: [
             {
               id: "palette:demography/race/WHITE",
-              race: [
-                "WHITE"
-              ],
-              participant_count: 115
+              race: ["WHITE"],
+              participant_count: 115,
             },
             {
               id: "palette:demography/race/BLACK_OR_AFRICAN_AMERICAN",
-              race: [
-                "BLACK_OR_AFRICAN_AMERICAN"
-              ],
-              participant_count: 70
+              race: ["BLACK_OR_AFRICAN_AMERICAN"],
+              participant_count: 70,
             },
             {
               id: "palette:demography/race/ASIAN",
-              race: [
-                "ASIAN"
-              ],
-              participant_count: 22
+              race: ["ASIAN"],
+              participant_count: 22,
             },
             {
               id: "palette:demography/race/AMERICAN_INDIAN_OR_ALASKA_NATIVE",
-              race: [
-                "AMERICAN_INDIAN_OR_ALASKA_NATIVE"
-              ],
-              participant_count: 20
-            }
-          ]
-        }
-      ]
+              race: ["AMERICAN_INDIAN_OR_ALASKA_NATIVE"],
+              participant_count: 20,
+            },
+          ],
+        },
+      ],
     },
     {
       research_study: "palette:study_two",
@@ -228,9 +203,9 @@ export const t2dFemaleSummary: SummaryResponse = {
             {
               id: "palette:demography/sex/FEMALE",
               sex: "FEMALE",
-              participant_count: 250
-            }
-          ]
+              participant_count: 250,
+            },
+          ],
         },
         {
           id: "palette:demography/race",
@@ -239,35 +214,27 @@ export const t2dFemaleSummary: SummaryResponse = {
           values: [
             {
               id: "palette:demography/race/WHITE",
-              race: [
-                "WHITE"
-              ],
-              participant_count: 150
+              race: ["WHITE"],
+              participant_count: 150,
             },
             {
               id: "palette:demography/race/BLACK_OR_AFRICAN_AMERICAN",
-              race: [
-                "BLACK_OR_AFRICAN_AMERICAN"
-              ],
-              participant_count: 50
+              race: ["BLACK_OR_AFRICAN_AMERICAN"],
+              participant_count: 50,
             },
             {
               id: "palette:demography/race/MIDDLE_EASTERN_OR_NORTH_AFRICAN",
-              race: [
-                "MIDDLE_EASTERN_OR_NORTH_AFRICAN"
-              ],
-              participant_count: 22
+              race: ["MIDDLE_EASTERN_OR_NORTH_AFRICAN"],
+              participant_count: 22,
             },
             {
               id: "palette:demography/race/NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER",
-              race: [
-                "NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER"
-              ],
-              participant_count: 24
-            }
-          ]
-        }
-      ]
-    }
-  ]
+              race: ["NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER"],
+              participant_count: 24,
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };

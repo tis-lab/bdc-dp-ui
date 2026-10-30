@@ -1,4 +1,4 @@
-import { Card, Stack, styled } from "@mui/material";
+import { Stack, styled } from "@mui/material";
 
 export const CriteriaSectionRoot = styled("section")(({ theme }) => ({
   display: "flex",
@@ -13,13 +13,9 @@ export const SectionHeader = styled("div")(({ theme }) => ({
   gap: theme.spacing(1),
 }));
 
-export const CriteriaList = styled(Stack)({
+export const CriteriaList = styled(Stack)(({ theme }) => ({
   width: "100%",
-});
-
-export const EmptyListCard = styled(Card)({
-  flexGrow: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-});
+  "& .MuiIconButton-root:hover, & .MuiIconButton-root.Mui-focusVisible": {
+    color: theme.palette.error.main,
+  },
+}));

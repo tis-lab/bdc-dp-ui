@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Searchbar, { Props } from "./Searchbar";
@@ -32,7 +31,7 @@ function ControlledSearchbar({
 }
 
 function renderStatic(props: Partial<Props> = {}) {
-  const onChange = vi.fn();
+  const onChange = jest.fn();
   const utils = render(
     <Searchbar id="test-search" value="" onChange={onChange} {...props} />,
   );
@@ -110,7 +109,7 @@ describe("Searchbar", () => {
 
     it("reflects the full typed value when controlled by a parent", async () => {
       const user = userEvent.setup();
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       render(<ControlledSearchbar onChange={onChange} />);
 
       await user.type(getInput(), "asthma");
@@ -194,8 +193,8 @@ describe("Searchbar", () => {
   describe("selecting an option", () => {
     it("calls onSelect with the clicked option, not onSearch", async () => {
       const user = userEvent.setup();
-      const onSelect = vi.fn();
-      const onSearch = vi.fn();
+      const onSelect = jest.fn();
+      const onSearch = jest.fn();
       render(
         <ControlledSearchbar
           options={OPTIONS}
@@ -214,7 +213,7 @@ describe("Searchbar", () => {
 
     it('fills the input with the label, reported with reason "selectOption"', async () => {
       const user = userEvent.setup();
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       render(<ControlledSearchbar options={OPTIONS} onChange={onChange} />);
 
       await user.type(getInput(), "ast");
@@ -239,8 +238,8 @@ describe("Searchbar", () => {
 
     it("selects the highlighted option on Enter without submitting the form", async () => {
       const user = userEvent.setup();
-      const onSelect = vi.fn();
-      const onSearch = vi.fn();
+      const onSelect = jest.fn();
+      const onSearch = jest.fn();
       render(
         <ControlledSearchbar
           options={OPTIONS}
@@ -261,7 +260,7 @@ describe("Searchbar", () => {
   describe("submitting", () => {
     it("calls onSearch with the value when Enter is pressed", async () => {
       const user = userEvent.setup();
-      const onSearch = vi.fn();
+      const onSearch = jest.fn();
       render(<ControlledSearchbar onSearch={onSearch} />);
 
       await user.type(getInput(), "asthma{Enter}");
@@ -272,8 +271,8 @@ describe("Searchbar", () => {
 
     it("submits the typed text, not an option, when Enter is pressed with none highlighted", async () => {
       const user = userEvent.setup();
-      const onSearch = vi.fn();
-      const onSelect = vi.fn();
+      const onSearch = jest.fn();
+      const onSelect = jest.fn();
       render(
         <ControlledSearchbar
           options={OPTIONS}
@@ -291,7 +290,7 @@ describe("Searchbar", () => {
 
     it("closes the dropdown on submit", async () => {
       const user = userEvent.setup();
-      render(<ControlledSearchbar options={OPTIONS} onSearch={vi.fn()} />);
+      render(<ControlledSearchbar options={OPTIONS} onSearch={jest.fn()} />);
 
       await user.type(getInput(), "ast");
       expect(screen.getByRole("listbox")).toBeInTheDocument();
@@ -303,7 +302,7 @@ describe("Searchbar", () => {
 
     it("trims whitespace before calling onSearch", async () => {
       const user = userEvent.setup();
-      const onSearch = vi.fn();
+      const onSearch = jest.fn();
       render(<ControlledSearchbar onSearch={onSearch} />);
 
       await user.type(getInput(), "  asthma  {Enter}");
@@ -314,7 +313,7 @@ describe("Searchbar", () => {
     it("calls onSearch with an empty string for whitespace-only input", async () => {
       // Documents current behavior: the caller decides whether "" should search
       const user = userEvent.setup();
-      const onSearch = vi.fn();
+      const onSearch = jest.fn();
       render(<ControlledSearchbar onSearch={onSearch} />);
 
       await user.type(getInput(), "   {Enter}");
@@ -324,7 +323,7 @@ describe("Searchbar", () => {
 
     it("can be submitted by an external button via the form attribute", async () => {
       const user = userEvent.setup();
-      const onSearch = vi.fn();
+      const onSearch = jest.fn();
       render(
         <>
           <ControlledSearchbar
@@ -344,7 +343,7 @@ describe("Searchbar", () => {
     });
 
     it("prevents the native form submission (no page reload)", () => {
-      renderStatic({ value: "x", onSearch: vi.fn() });
+      renderStatic({ value: "x", onSearch: jest.fn() });
 
       // fireEvent returns false when preventDefault() was called
       const notPrevented = fireEvent.submit(screen.getByRole("search"));
@@ -380,9 +379,9 @@ describe("Searchbar", () => {
 
     it("does not call onChange, onSearch or onSelect when disabled", async () => {
       const user = userEvent.setup();
-      const onChange = vi.fn();
-      const onSearch = vi.fn();
-      const onSelect = vi.fn();
+      const onChange = jest.fn();
+      const onSearch = jest.fn();
+      const onSelect = jest.fn();
       render(
         <ControlledSearchbar
           disabled

@@ -8,4 +8,8 @@ export default {
   testResultsProcessor: "jest-sonar-reporter",
   coverageDirectory: "testResults/coverage",
   coverageReporters: ["json", "lcov", "cobertura", "html", "text"],
+  moduleNameMapper: {
+    "^echarts-for-react(/.*)?$": "<rootDir>/src/test/EchartsStub.tsx",
+    "(^|/)viteEnv$": "<rootDir>/src/test/viteEnv.ts",
+  },
 };

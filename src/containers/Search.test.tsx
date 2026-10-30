@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Search from "./Search";
@@ -14,17 +13,18 @@ import type {
 
 /* Mocks */
 
-vi.mock("../hooks/useConceptSearch", () => ({
-  useConceptSearch: vi.fn(),
+jest.mock("../hooks/useConceptSearch", () => ({
+  useConceptSearch: jest.fn(),
 }));
 
-vi.mock("../hooks/useConceptSuggestions", () => ({
-  useConceptSuggestions: vi.fn(),
+jest.mock("../hooks/useConceptSuggestions", () => ({
+  useConceptSuggestions: jest.fn(),
 }));
 
 // Stub so these tests don't depend on Notification's internals.
 // The dismiss button lets tests exercise onClose.
-vi.mock("../components/Notification/Notification", () => ({
+jest.mock("../components/Notification/Notification", () => ({
+  __esModule: true,
   default: ({
     open,
     severity,
@@ -47,10 +47,10 @@ vi.mock("../components/Notification/Notification", () => ({
 }));
 
 // jsdom doesn't implement scrollTo; stub it so page changes don't log errors
-const scrollToSpy = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+const scrollToSpy = jest.spyOn(window, "scrollTo").mockImplementation(() => {});
 
-const mockedUseConceptSearch = vi.mocked(useConceptSearch);
-const mockedUseConceptSuggestions = vi.mocked(useConceptSuggestions);
+const mockedUseConceptSearch = jest.mocked(useConceptSearch);
+const mockedUseConceptSuggestions = jest.mocked(useConceptSuggestions);
 
 type SearchResult = ReturnType<typeof useConceptSearch>;
 type SearchOptions = Parameters<typeof useConceptSearch>[1];
@@ -279,7 +279,9 @@ describe("Search", () => {
     it("prompts with a placeholder and example searches before anything is submitted", () => {
       render(<Search />);
       expect(getInput()).toHaveAttribute("placeholder", "Search concepts…");
-      expect(screen.getByText("Search for a concept above, or try:")).toBeInTheDocument();
+      expect(
+        screen.getByText("Search for a concept above, or try:"),
+      ).toBeInTheDocument();
     });
 
     it("hides the example searches once a search is submitted", async () => {
@@ -288,7 +290,9 @@ describe("Search", () => {
 
       await searchFor("asthma");
 
-      expect(screen.queryByText("Search for a concept above, or try:")).toBeNull();
+      expect(
+        screen.queryByText("Search for a concept above, or try:"),
+      ).toBeNull();
     });
 
     it("searches an example term when it is clicked", async () => {
@@ -697,20 +701,10 @@ describe("Search", () => {
       expect(getCardTitles()).toEqual(["Asthma", "Childhood asthma"]);
     });
 
-    it("reports each submitted term to onSearch", async () => {
-      mockSearch({ data: resultsOf([asthma]) });
-      const onSearch = vi.fn();
-      render(<Search onSearch={onSearch} />);
-
-      await searchFor("  asthma ");
-
-      expect(onSearch).toHaveBeenCalledWith("asthma");
-    });
-
     it("passes the clicked result to onInclude or onExclude", async () => {
       mockSearch({ data: resultsOf([asthma, childhoodAsthma]) });
-      const onInclude = vi.fn();
-      const onExclude = vi.fn();
+      const onInclude = jest.fn();
+      const onExclude = jest.fn();
       render(<Search onInclude={onInclude} onExclude={onExclude} />);
 
       const user = await searchFor("asthma");
@@ -723,12 +717,12 @@ describe("Search", () => {
 
     it("marks results already in the criteria, and takes them out on click", async () => {
       mockSearch({ data: resultsOf([asthma, childhoodAsthma]) });
-      const removeInclude = vi.fn();
-      const onRemove = vi.fn(() => removeInclude);
+      const removeInclude = jest.fn();
+      const onRemove = jest.fn(() => removeInclude);
       render(
         <Search
-          onInclude={vi.fn()}
-          onExclude={vi.fn()}
+          onInclude={jest.fn()}
+          onExclude={jest.fn()}
           criteria={{ include: [asthma], exclude: [], match: "all" }}
           onRemove={onRemove}
         />,
@@ -857,7 +851,9 @@ describe("Search", () => {
 
     it("keys cards uniquely even when a variable name matches a term id", async () => {
       // Without the type prefix in the key, React would warn about duplicates
-      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const errorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockSearch({
         data: resultsOf([makeVariable("C0004096", "Asthma variable"), asthma]),
       });
@@ -1044,11 +1040,13 @@ describe("Search", () => {
   describe("pagination", () => {
     it("shows placeholder cards instead of the previous page while the next loads", async () => {
       mockSearch({ data: resultsOf([asthma]), isPlaceholderData: true });
-      render(<Search onInclude={vi.fn()} />);
+      render(<Search onInclude={jest.fn()} />);
 
       await searchFor("asthma");
 
-      expect(screen.getByRole("progressbar", { name: "Loading page" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("progressbar", { name: "Loading page" }),
+      ).toBeInTheDocument();
       expect(screen.queryByText(asthma.label)).toBeNull();
     });
 

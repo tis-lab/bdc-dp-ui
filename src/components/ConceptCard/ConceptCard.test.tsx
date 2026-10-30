@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   render,
   screen,
@@ -14,7 +13,8 @@ import type { SearchItem } from "../../api/graphql/queries/resolveTerms";
 
 // Stub so these tests don't depend on ConceptCardDetails' internals;
 // it has its own tests. Props are exposed so we can check what's passed.
-vi.mock("./ConceptCardDetails", () => ({
+jest.mock("./ConceptCardDetails", () => ({
+  __esModule: true,
   default: ({
     category,
     description,
@@ -76,7 +76,10 @@ function renderCard(props: CardProps = {}) {
   return render(<ConceptCard concept={asthma} isFirst isLast {...props} />);
 }
 
-const withActions = ({ onInclude = vi.fn(), onExclude = vi.fn() } = {}) => ({
+const withActions = ({
+  onInclude = jest.fn(),
+  onExclude = jest.fn(),
+} = {}) => ({
   actions: [
     { label: "+ Include", onClick: onInclude },
     { label: "+ Exclude", onClick: onExclude },
@@ -98,7 +101,7 @@ async function openDetails() {
 }
 
 afterEach(() => {
-  vi.restoreAllMocks();
+  jest.restoreAllMocks();
 });
 
 // ----------------------------------------------------------------------
@@ -296,7 +299,7 @@ describe("ConceptCard", () => {
 
     it("calls an action with the variable", async () => {
       const user = userEvent.setup();
-      const onInclude = vi.fn();
+      const onInclude = jest.fn();
       renderCard({ concept: systolicBp, ...withActions({ onInclude }) });
 
       await user.click(getIncludeButton());
@@ -327,13 +330,13 @@ describe("ConceptCard", () => {
 
     it("calls only the clicked action, with the concept", async () => {
       const user = userEvent.setup();
-      const onInclude = vi.fn();
-      const onExclude = vi.fn();
+      const onInclude = jest.fn();
+      const onExclude = jest.fn();
       renderCard(withActions({ onInclude, onExclude }));
 
       await user.click(getExcludeButton());
 
-      expect(onExclude).toHaveBeenCalledOnce();
+      expect(onExclude).toHaveBeenCalledTimes(1);
       expect(onExclude).toHaveBeenCalledWith(asthma);
       expect(onInclude).not.toHaveBeenCalled();
     });
@@ -369,7 +372,7 @@ describe("ConceptCard", () => {
       "does not forward isFirst/isLast to the DOM ($isFirst, $isLast)",
       ({ isFirst, isLast }) => {
         // React logs an "unknown prop" error if these leak through styled()
-        const errorSpy = vi
+        const errorSpy = jest
           .spyOn(console, "error")
           .mockImplementation(() => {});
 

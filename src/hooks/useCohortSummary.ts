@@ -47,6 +47,5 @@ export function useCohortSummary(criteria: Criteria) {
       return illustrateSummary(data.summary, criteria);
     },
     enabled,
-    placeholderData: (previous) => (enabled ? previous : undefined),
   });
 }

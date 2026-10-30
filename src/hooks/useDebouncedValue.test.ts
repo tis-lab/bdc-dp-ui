@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useDebouncedValue } from "./useDebouncedValue";
 
@@ -17,16 +16,16 @@ function renderDebounced<T>(value: T, delayMs = DELAY) {
 
 function advance(ms: number) {
   act(() => {
-    vi.advanceTimersByTime(ms);
+    jest.advanceTimersByTime(ms);
   });
 }
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  jest.useFakeTimers();
 });
 
 afterEach(() => {
-  vi.useRealTimers();
+  jest.useRealTimers();
 });
 
 // ----------------------------------------------------------------------
@@ -169,11 +168,11 @@ describe("useDebouncedValue", () => {
     it("clears the pending timer on unmount", () => {
       const { rerender, unmount } = renderDebounced("a");
       rerender({ value: "b", delayMs: DELAY });
-      expect(vi.getTimerCount()).toBe(1);
+      expect(jest.getTimerCount()).toBe(1);
 
       unmount();
 
-      expect(vi.getTimerCount()).toBe(0);
+      expect(jest.getTimerCount()).toBe(0);
     });
 
     it("keeps at most one pending timer", () => {
@@ -183,7 +182,7 @@ describe("useDebouncedValue", () => {
         rerender({ value, delayMs: DELAY });
       }
 
-      expect(vi.getTimerCount()).toBe(1);
+      expect(jest.getTimerCount()).toBe(1);
     });
   });
 

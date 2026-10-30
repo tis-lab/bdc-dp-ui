@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ConceptCardDetails, {
@@ -13,14 +12,16 @@ import parseCurie from "../../utils/parseCurie";
 
 // Parsing rules belong in parseCurie's own tests; here we only care
 // how each parse result is displayed.
-vi.mock("../../utils/parseCurie", () => ({
-  default: vi.fn(),
+jest.mock("../../utils/parseCurie", () => ({
+  __esModule: true,
+  default: jest.fn(),
 }));
 
 // Stub so these tests don't depend on SourceVariablePopover's internals;
 // it has its own tests. Props are exposed so we can check what's passed,
 // and the button lets tests exercise onClose.
-vi.mock("./SourceVariablePopover", () => ({
+jest.mock("./SourceVariablePopover", () => ({
+  __esModule: true,
   default: ({
     id,
     anchorEl,
@@ -46,7 +47,7 @@ vi.mock("./SourceVariablePopover", () => ({
     ) : null,
 }));
 
-const mockedParseCurie = vi.mocked(parseCurie);
+const mockedParseCurie = jest.mocked(parseCurie);
 
 type ParsedCurie = NonNullable<ReturnType<typeof parseCurie>>;
 

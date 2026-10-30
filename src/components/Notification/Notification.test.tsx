@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { AlertColor } from "@mui/material";
@@ -15,7 +14,7 @@ function renderNotification(props: Partial<NotificationProps> = {}) {
       open
       severity="error"
       message="Network down"
-      onClose={vi.fn()}
+      onClose={jest.fn()}
       {...props}
     />,
   );
@@ -50,14 +49,14 @@ describe("Notification", () => {
     );
 
     it("shows a close button when onClose is provided", () => {
-      renderNotification({ onClose: vi.fn() });
+      renderNotification({ onClose: jest.fn() });
       expect(queryCloseButton()).toBeInTheDocument();
     });
   });
 
   describe("closing", () => {
     it("calls onClose when the close button is clicked", async () => {
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       const user = userEvent.setup();
       renderNotification({ onClose });
 
@@ -68,7 +67,7 @@ describe("Notification", () => {
 
     it("ignores clicks outside the notification", async () => {
       const user = userEvent.setup();
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       render(
         <>
           <button>Outside</button>
@@ -93,37 +92,37 @@ describe("Notification", () => {
 
   describe("auto-hide", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      jest.useFakeTimers();
     });
 
     afterEach(() => {
-      vi.useRealTimers();
+      jest.useRealTimers();
     });
 
     it("calls onClose after 5 seconds, not before", () => {
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       renderNotification({ onClose });
 
-      act(() => vi.advanceTimersByTime(AUTO_HIDE_MS - 1));
+      act(() => jest.advanceTimersByTime(AUTO_HIDE_MS - 1));
       expect(onClose).not.toHaveBeenCalled();
 
-      act(() => vi.advanceTimersByTime(1));
-      expect(onClose).toHaveBeenCalledOnce();
+      act(() => jest.advanceTimersByTime(1));
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it("does not call onClose while closed", () => {
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       renderNotification({ open: false, onClose });
 
-      act(() => vi.advanceTimersByTime(AUTO_HIDE_MS * 2));
+      act(() => jest.advanceTimersByTime(AUTO_HIDE_MS * 2));
 
       expect(onClose).not.toHaveBeenCalled();
     });
 
     it("restarts the timer when reopened", () => {
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       const { rerender } = renderNotification({ onClose });
-      act(() => vi.advanceTimersByTime(3000));
+      act(() => jest.advanceTimersByTime(3000));
 
       // Close and reopen partway through
       rerender(
@@ -144,11 +143,11 @@ describe("Notification", () => {
       );
 
       // 3s + 3s would have hit 5s on the old timer
-      act(() => vi.advanceTimersByTime(3000));
+      act(() => jest.advanceTimersByTime(3000));
       expect(onClose).not.toHaveBeenCalled();
 
-      act(() => vi.advanceTimersByTime(2000));
-      expect(onClose).toHaveBeenCalledOnce();
+      act(() => jest.advanceTimersByTime(2000));
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
 });

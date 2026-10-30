@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SourceVariablePopover, {
@@ -16,7 +15,7 @@ const anchors: HTMLElement[] = [];
 
 /** Renders a real anchor element first, so the popover can position against it. */
 function renderPopover(props: Partial<PopoverProps> = {}) {
-  const onClose = vi.fn();
+  const onClose = jest.fn();
   const anchor = document.createElement("button");
   anchor.textContent = "hypertension";
   document.body.appendChild(anchor);
@@ -105,7 +104,7 @@ describe("SourceVariablePopover", () => {
       });
       await user.click(buttons[index]);
 
-      expect(onClose).toHaveBeenCalledOnce();
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it("calls onClose on Escape", async () => {
@@ -114,7 +113,7 @@ describe("SourceVariablePopover", () => {
 
       await user.keyboard("{Escape}");
 
-      expect(onClose).toHaveBeenCalledOnce();
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it("calls onClose when clicking outside", async () => {
@@ -126,7 +125,7 @@ describe("SourceVariablePopover", () => {
       expect(backdrop).not.toBeNull();
       await user.click(backdrop!);
 
-      expect(onClose).toHaveBeenCalledOnce();
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it("does not call onClose when clicking inside", async () => {

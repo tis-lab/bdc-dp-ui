@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Alert, Card, Chip, Typography } from "@mui/material";
+import { Card, Chip, ToggleButtonGroup, Typography } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import CriteriaSection from "../CriteriaSection";
 import EmptyState from "../EmptyState";
@@ -13,27 +13,10 @@ import type {
 import {
   CriteriaPanel,
   Header,
-  MatchCard,
-  MatchLabel,
-  MatchTitle,
+  MatchRow,
   MatchToggle,
-  MatchToggleGroup,
   Sections,
 } from "./CohortCriteria.styles";
-
-const MATCH_TEXT: Record<
-  CriteriaMatch,
-  { title: string; description: string }
-> = {
-  all: {
-    title: "Match all criteria",
-    description: "Participants must meet every inclusion criterion.",
-  },
-  any: {
-    title: "Match at least one criterion",
-    description: "Participants can meet any one of the inclusion criteria.",
-  },
-};
 
 // ----------------------------------------------------------------------
 
@@ -78,67 +61,41 @@ export default function CohortCriteria({
           />
         </Card>
       ) : (
-        <>
-          {criteria.include.length > 1 && (
-            <>
-              <MatchCard variant="outlined">
-                <div>
-                  <MatchLabel
-                    variant="overline"
-                    color="text.secondary"
-                    component="p"
-                  >
-                    Inclusion logic
-                  </MatchLabel>
-                  <MatchTitle variant="subtitle1" component="p">
-                    {MATCH_TEXT[criteria.match].title}
-                  </MatchTitle>
-                  <Typography variant="body2" color="text.secondary">
-                    {MATCH_TEXT[criteria.match].description}
-                  </Typography>
-                </div>
-                <MatchToggleGroup
+        <Sections>
+          <CriteriaSection
+            title="Include"
+            emptyText="No inclusion criteria added"
+            items={criteria.include}
+            onRemove={onRemove("include")}
+          >
+            {criteria.include.length > 1 && (
+              <MatchRow>
+                <Typography variant="body2">
+                  Include participants who match
+                </Typography>
+                <ToggleButtonGroup
                   exclusive
+                  size="small"
                   value={criteria.match}
                   onChange={(_, match: CriteriaMatch | null) =>
                     match && onMatchChange(match)
                   }
                   aria-label="Inclusion logic"
                 >
-                  <MatchToggle value="all">
-                    All criteria
-                    <Typography variant="overline" color="text.secondary">
-                      AND
-                    </Typography>
-                  </MatchToggle>
-                  <MatchToggle value="any">
-                    Any criterion
-                    <Typography variant="overline" color="text.secondary">
-                      OR
-                    </Typography>
-                  </MatchToggle>
-                </MatchToggleGroup>
-              </MatchCard>
-              <Alert severity="info">
-                Counts are illustrative until the summary API supports AND/OR.
-              </Alert>
-            </>
-          )}
-          <Sections>
-            <CriteriaSection
-              title="Include"
-              emptyText="No inclusion criteria added"
-              items={criteria.include}
-              onRemove={onRemove("include")}
-            />
-            <CriteriaSection
-              title="Exclude"
-              emptyText="No exclusion criteria added"
-              items={criteria.exclude}
-              onRemove={onRemove("exclude")}
-            />
-          </Sections>
-        </>
+                  <MatchToggle value="all">All</MatchToggle>
+                  <MatchToggle value="any">Any</MatchToggle>
+                </ToggleButtonGroup>
+                <Typography variant="body2">of these criteria.</Typography>
+              </MatchRow>
+            )}
+          </CriteriaSection>
+          <CriteriaSection
+            title="Exclude"
+            emptyText="No exclusion criteria added"
+            items={criteria.exclude}
+            onRemove={onRemove("exclude")}
+          />
+        </Sections>
       )}
     </CriteriaPanel>
   );

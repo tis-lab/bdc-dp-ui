@@ -37,6 +37,7 @@
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.20.2",
     "@types/react": "^18.3.12",
@@ -53,7 +54,8 @@
     "ts-jest": "^29.4.15",
     "typescript": "~5.8.3",
     "vite": "^6.3.3",
-    "vite-plugin-dts": "^5.1.0"
+    "vite-plugin-dts": "^5.1.0",
+    "whatwg-fetch": "^3.6.20"
   },
   "peerDependencies": {
     "@emotion/react": "^11.14.0",

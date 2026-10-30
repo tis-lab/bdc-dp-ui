@@ -1,6 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi } from "vitest";
 import CriteriaSection from "./CriteriaSection";
 import type { SearchItem } from "../../api/graphql/queries/resolveTerms";
 
@@ -31,12 +30,14 @@ describe("CriteriaSection", () => {
         title="Include"
         emptyText="No inclusion criteria added"
         items={[]}
-        onRemove={vi.fn()}
+        onRemove={jest.fn()}
       />,
     );
 
     const section = screen.getByRole("region", { name: "Include" });
-    expect(within(section).getByText("No inclusion criteria added")).toBeInTheDocument();
+    expect(
+      within(section).getByText("No inclusion criteria added"),
+    ).toBeInTheDocument();
     expect(within(section).getByText("0")).toBeInTheDocument();
   });
 
@@ -46,7 +47,7 @@ describe("CriteriaSection", () => {
         emptyText="No criteria added"
         title="Include"
         items={[hypertension, systolicBp]}
-        onRemove={vi.fn()}
+        onRemove={jest.fn()}
       />,
     );
 
@@ -64,7 +65,7 @@ describe("CriteriaSection", () => {
         title="Include"
         emptyText="No criteria added"
         items={[hypertension]}
-        onRemove={vi.fn()}
+        onRemove={jest.fn()}
       />,
     );
 
@@ -75,7 +76,7 @@ describe("CriteriaSection", () => {
 
   it("calls onRemove with the clicked item", async () => {
     const user = userEvent.setup();
-    const onRemove = vi.fn();
+    const onRemove = jest.fn();
     render(
       <CriteriaSection
         emptyText="No criteria added"
@@ -87,7 +88,7 @@ describe("CriteriaSection", () => {
 
     await user.click(screen.getAllByRole("button", { name: "Remove" })[1]);
 
-    expect(onRemove).toHaveBeenCalledOnce();
+    expect(onRemove).toHaveBeenCalledTimes(1);
     expect(onRemove).toHaveBeenCalledWith(systolicBp);
   });
 });

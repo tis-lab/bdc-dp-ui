@@ -7,7 +7,7 @@ WORKDIR /opt/app-root/src
 # Install dependencies first so this layer is cached between builds.
 # npm 7+ also installs the peerDependencies (MUI, Emotion) the app needs.
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY . .
 

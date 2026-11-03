@@ -24,7 +24,4 @@ COPY --from=build /opt/app-root/src/dist/ /var/www/html/
 # SPA routing, caching and security headers
 COPY httpd/httpd.conf /etc/httpd/conf.d/httpd.conf
 
-# Non-root Apache listens on 8080 instead of 80
-EXPOSE 8080
-
 CMD ["run-httpd"]

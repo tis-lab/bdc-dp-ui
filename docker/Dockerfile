@@ -19,7 +19,7 @@ ENV VITE_GRAPHQL_URL=${VITE_GRAPHQL_URL}
 
 # Type-check, then build only the standalone app into /dist.
 # The /lib output (build:lib) is the npm package and isn't served, so it's skipped.
-RUN npm run build:app
+RUN npx tsc -b && npm run build:app
 
 # ---------- Stage 2: serve with Apache ----------
 FROM registry.access.redhat.com/ubi9/httpd-24

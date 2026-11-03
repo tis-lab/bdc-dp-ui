@@ -23,8 +23,9 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:lib": "tsc -b && vite build --config vite.lib.config.ts",
+    "build": "tsc -b && npm run build:lib && npm run build:app",
+    "build:app": "vite build",
+    "build:lib": "vite build --config vite.lib.config.ts",
     "preview": "vite preview",
     "start": "vite preview --host 0.0.0.0 --port 8080",
     "prepublishOnly": "npm run build:lib",

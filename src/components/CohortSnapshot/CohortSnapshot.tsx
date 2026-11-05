@@ -17,29 +17,30 @@ import {
 // ----------------------------------------------------------------------
 
 export interface Props {
-  /** Without one, everyone available is shown. */
-  summary?: SummaryResponse;
-  availableParticipants: number;
+  /** Current criteria's summary; if absent, the available total is shown. */
+  filteredSummary?: SummaryResponse;
+  /** Unique participants available; the denominator for the cohort count. */
+  availableTotal: number;
   /** First load only; later updates keep the current counts on screen. */
   isLoading?: boolean;
-  /** Shown instead of the counts, so a failed request never looks like everyone. */
+  /** Replaces the counts so a failure is not shown as the full population. */
   error?: Error | null;
 }
 
 // ----------------------------------------------------------------------
 
 export default function CohortSnapshot({
-  summary,
-  availableParticipants,
+  filteredSummary,
+  availableTotal,
   isLoading = false,
   error = null,
 }: Props) {
   const titleId = useId();
   const theme = useTheme();
 
-  const participants = summary
-    ? cohortParticipants(summary)
-    : availableParticipants;
+  const cohortCount = filteredSummary
+    ? cohortParticipants(filteredSummary)
+    : availableTotal;
 
   const donut = useMemo(() => ({
     series: [
@@ -53,24 +54,24 @@ export default function CohortSnapshot({
         data: [
           {
             name: "In cohort",
-            value: participants,
+            value: cohortCount,
             itemStyle: { color: theme.palette.primary.main },
           },
           {
             name: "Not in cohort",
-            value: Math.max(availableParticipants - participants, 0),
+            value: Math.max(availableTotal - cohortCount, 0),
             itemStyle: { color: theme.palette.grey[300] },
           },
         ],
       },
     ],
-  }), [participants, availableParticipants, theme]);
+  }), [cohortCount, availableTotal, theme]);
 
   return (
     <PanelSection aria-labelledby={titleId} aria-busy={isLoading}>
       <div>
         <PanelTitle id={titleId}>Cohort Snapshot</PanelTitle>
-        {summary && (
+        {filteredSummary && (
           <Typography variant="body2" color="text.secondary">
             Based on current cohort
           </Typography>
@@ -95,21 +96,21 @@ export default function CohortSnapshot({
             <ReactECharts option={donut} style={ECHARTS_FILL} />
             <DonutCenter>
               <Typography variant="h5" component="p">
-                {participants.toLocaleString()}
+                {cohortCount.toLocaleString()}
               </Typography>
               <DonutCaption variant="caption">Estimated Participants</DonutCaption>
-              {summary && (
+              {filteredSummary && (
                 <DonutCaption variant="caption" color="text.secondary">
-                  of {availableParticipants.toLocaleString()} available
+                  of {availableTotal.toLocaleString()} available
                 </DonutCaption>
               )}
             </DonutCenter>
           </Donut>
 
           <SnapshotFooter>
-            {summary && (
+            {filteredSummary && (
               <Typography variant="body2">
-                Studies: <strong>{summary.studies.length}</strong>
+                Studies: <strong>{filteredSummary.studies.length}</strong>
               </Typography>
             )}
             <Typography variant="caption" color="text.secondary">

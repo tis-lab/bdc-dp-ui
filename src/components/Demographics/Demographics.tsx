@@ -23,10 +23,11 @@ const SLOTS: { slot: DemographicSlot; label: string }[] = [
 ];
 
 export interface Props {
-  summary?: SummaryResponse;
+  /** Current criteria's summary; if absent, the empty state is shown. */
+  filteredSummary?: SummaryResponse;
   /** First load only; later updates keep the current chart on screen. */
   isLoading?: boolean;
-  /** Shown instead of the chart, so a failed request never reads as "add criteria". */
+  /** Replaces the chart so a failure is not shown as the empty state. */
   error?: Error | null;
 }
 
@@ -36,7 +37,7 @@ const SKELETON_BARS = 3;
 // ----------------------------------------------------------------------
 
 export default function Demographics({
-  summary,
+  filteredSummary,
   isLoading = false,
   error = null,
 }: Props) {
@@ -46,18 +47,19 @@ export default function Demographics({
     <PanelSection aria-labelledby={titleId} aria-busy={isLoading}>
       <div>
         <PanelTitle id={titleId}>Demographics</PanelTitle>
-        {summary && !error && (
+        {filteredSummary && !error && (
           <Typography variant="body2" color="text.secondary">
-            {cohortParticipants(summary).toLocaleString()} participants ·{" "}
-            {summary.studies.length} studies
+            {cohortParticipants(filteredSummary).toLocaleString()}{" "}
+            participants ·{" "}
+            {filteredSummary.studies.length} studies
           </Typography>
         )}
       </div>
 
       {error ? (
         <Alert severity="error">Couldn't load demographics.</Alert>
-      ) : summary ? (
-        <Breakdown summary={summary} />
+      ) : filteredSummary ? (
+        <Breakdown filteredSummary={filteredSummary} />
       ) : isLoading ? (
         <BarArea rows={SKELETON_BARS}>
           <SkeletonRows
@@ -73,14 +75,18 @@ export default function Demographics({
   );
 }
 
-const Breakdown = ({ summary }: { summary: SummaryResponse }) => {
+const Breakdown = ({
+  filteredSummary,
+}: {
+  filteredSummary: SummaryResponse;
+}) => {
   const theme = useTheme();
   const [slot, setSlot] = useState<DemographicSlot>("sex");
 
-  const total = cohortParticipants(summary);
+  const total = cohortParticipants(filteredSummary);
   const rows = useMemo(
-    () => demographicBreakdown(summary, slot),
-    [summary, slot],
+    () => demographicBreakdown(filteredSummary, slot),
+    [filteredSummary, slot],
   );
 
   const bars = useMemo(

@@ -1,4 +1,4 @@
-// Subset of schema/summary.yaml.
+// Subset of the middleware's summary response.
 
 export interface DemographyValue {
   id: string;
@@ -43,19 +43,20 @@ export const COHORT_SUMMARY_QUERY = `
 `;
 
 /**
- * INCLUDE matches a recorded PRESENT condition and EXCLUDE a recorded ABSENT
- * one; EXCLUDE is not "everyone without it". Relationship defaults to ONESELF.
+ * INCLUDE matches a recorded PRESENT condition; EXCLUDE matches a recorded
+ * ABSENT condition, not the absence of a record. Relationship defaults to
+ * ONESELF.
  */
 export type ConditionSelection = "INCLUDE" | "EXCLUDE";
 
-/** Exactly one field per node; nesting is the parentheses. Groups are never empty. */
+/** One field per node; nesting defines grouping. Groups must be non-empty. */
 export type SummaryFilter =
   | { condition: { concept: string; selection: ConditionSelection } }
   | { and: SummaryFilter[] }
   | { or: SummaryFilter[] };
 
 export interface CohortSummaryVariables {
-  /** null summarizes everyone. */
+  /** null returns the unfiltered summary. */
   filter: SummaryFilter | null;
 }
 

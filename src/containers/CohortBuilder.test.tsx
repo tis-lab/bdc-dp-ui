@@ -16,7 +16,7 @@ const studiesOf = (...counts: number[]): SummaryResponse => ({
   })),
 });
 
-/** A filter's top node picks the cohort. */
+/** A fixed cohort per filter shape: AND, OR, or a single condition. */
 const summaryFor = (filter: Record<string, unknown>) =>
   "and" in filter
     ? studiesOf(250, 200)
@@ -215,7 +215,7 @@ describe("CohortBuilder", () => {
 
       await user.click(screen.getByRole("button", { name: "include result" }));
 
-      // 480 + 460 from the API's studies
+      // Sum of study counts: 480 + 460
       expect(await screen.findByText("940")).toBeInTheDocument();
       expect(screen.getByText(`of ${AVAILABLE} available`)).toBeInTheDocument();
       expect(

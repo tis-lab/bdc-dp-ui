@@ -30,7 +30,7 @@ const condition =
   (selection: ConditionSelection) =>
   (concept: string): SummaryFilter => ({ condition: { concept, selection } });
 
-/** One node as itself, several in a group; null for none. */
+/** Groups two or more nodes; returns one node as-is, null for none. */
 const group = (
   op: "and" | "or",
   nodes: SummaryFilter[],
@@ -41,8 +41,8 @@ const group = (
 };
 
 /**
- * Includes combine by `match`, and every exclude must also hold:
- * (A AND/OR B) AND C-absent AND D-absent. null when nothing is selected.
+ * Builds the summary filter: includes are combined by `match`, and each exclude
+ * is ANDed with the result. Returns null when no criteria are selected.
  */
 export const summaryFilter = (
   include: string[],
@@ -59,7 +59,7 @@ export const summaryFilter = (
   ]);
 };
 
-/** Fails on GraphQL errors or a null summary, so neither reads as zero. */
+/** Throws on GraphQL errors or a null summary instead of returning empty. */
 export const fetchSummary = async (
   filter: SummaryFilter | null,
   signal: AbortSignal,
@@ -76,7 +76,7 @@ export const fetchSummary = async (
   return data.summary;
 };
 
-/** Runs only once a concept is included or excluded. */
+/** Disabled until at least one concept is included or excluded. */
 export const useCohortSummary = (criteria: Criteria) => {
   const include = useMemo(
     () => criteria.include.map(conceptOf).sort(),

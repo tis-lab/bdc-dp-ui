@@ -38,8 +38,8 @@ export default function CohortBuilder() {
     exclude: [],
     match: "all",
   });
-  const available = useAvailableParticipants();
-  const summary = useCohortSummary(criteria);
+  const availableTotal = useAvailableParticipants();
+  const filteredSummary = useCohortSummary(criteria);
 
   const handleInclude = useCallback(
     (item: SearchItem) => setCriteria(addTo("include", item)),
@@ -78,16 +78,16 @@ export default function CohortBuilder() {
 
         <Overview aria-label="Cohort overview">
           <CohortSnapshot
-            summary={summary.data}
-            availableParticipants={available.data ?? 0}
-            isLoading={available.isLoading || summary.isLoading}
-            error={available.error ?? summary.error}
+            filteredSummary={filteredSummary.data}
+            availableTotal={availableTotal.data ?? 0}
+            isLoading={availableTotal.isLoading || filteredSummary.isLoading}
+            error={availableTotal.error ?? filteredSummary.error}
           />
           <Divider />
           <Demographics
-            summary={summary.data}
-            isLoading={summary.isLoading}
-            error={summary.error}
+            filteredSummary={filteredSummary.data}
+            isLoading={filteredSummary.isLoading}
+            error={filteredSummary.error}
           />
         </Overview>
       </CohortBuilderLayout>

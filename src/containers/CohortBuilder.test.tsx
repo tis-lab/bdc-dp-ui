@@ -16,15 +16,17 @@ const studiesOf = (...counts: number[]): SummaryResponse => ({
   })),
 });
 
-/** The unfiltered summary is everyone; a filter's top node picks the cohort. */
-const summaryFor = (filter: Record<string, unknown> | null) =>
-  !filter
-    ? studiesOf(1000, 1000)
-    : "and" in filter
-      ? studiesOf(250, 200)
-      : "or" in filter
-        ? studiesOf(600, 600)
-        : t2dSummary;
+/** A filter's top node picks the cohort. */
+const summaryFor = (filter: Record<string, unknown>) =>
+  "and" in filter
+    ? studiesOf(250, 200)
+    : "or" in filter
+      ? studiesOf(600, 600)
+      : t2dSummary;
+
+const pageLoadSnapshot = {
+  participantCount: { value: 2000, suppressed: false },
+};
 
 const mockHypertension: SearchItem = {
   __typename: "Term",
@@ -73,8 +75,10 @@ beforeEach(() => {
     VITE_GRAPHQL_URL: "https://graphql.test/graphql",
   };
   jest.spyOn(globalThis, "fetch").mockImplementation(async (_, init) => {
-    const { variables } = JSON.parse(init?.body as string);
-    const data = { summary: summaryFor(variables.filter) };
+    const { query, variables } = JSON.parse(init?.body as string);
+    const data = query.includes("pageLoadSnapshot")
+      ? { pageLoadSnapshot }
+      : { summary: summaryFor(variables.filter) };
     return new Response(JSON.stringify({ data }), { status: 200 });
   });
 });
@@ -183,7 +187,7 @@ describe("CohortBuilder", () => {
   });
 
   describe("cohort overview", () => {
-    it("asks only for the unfiltered summary on page load, and shows its total", async () => {
+    it("asks only for the page load snapshot on page load, and shows its total", async () => {
       renderBuilder();
 
       expect(await screen.findByText(AVAILABLE)).toBeInTheDocument();
@@ -191,7 +195,7 @@ describe("CohortBuilder", () => {
         screen.getByText("Include a concept to see its demographic breakdown."),
       ).toBeInTheDocument();
       expect(sentBodies()).toHaveLength(1);
-      expect(sentBodies()[0].variables).toEqual({ filter: null });
+      expect(sentBodies()[0].query).toContain("pageLoadSnapshot");
     });
 
     it("shows an error instead of the counts when the page load request fails", async () => {

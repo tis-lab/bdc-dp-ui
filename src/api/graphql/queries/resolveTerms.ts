@@ -4,13 +4,12 @@ export const RESOLVE_TERMS_QUERY = `
     terms(query: $query, limit: $limit, offset: $offset) {
       items {
         __typename
-        ... on BdcVariable {
-          name
-          label
-          domain
+        ... on BdcConcept {
+          conceptType
+          displayLabel
+          bdchmType
           studyCount
           studies
-          concepts
         }
         ... on Term {
           id
@@ -29,7 +28,7 @@ export const RESOLVE_TERMS_QUERY = `
       limit
       offset
       hasMore
-      bdcVariableCount
+      bdcConceptCount
     }
   }
 `;
@@ -50,13 +49,12 @@ export interface BdcCoverage {
   variableNames: string[];
 }
 
-export interface BdcVariable {
-  name: string;
-  label: string;
-  domain: string | null;
+export interface BdcConcept {
+  conceptType: string;
+  displayLabel: string;
+  bdchmType: string | null;
   studyCount: number;
   studies: string[];
-  concepts: string[];
 }
 
 export interface Term {
@@ -68,10 +66,9 @@ export interface Term {
   bdc: BdcCoverage;
 }
 
-// BDC variables come first in `items`, followed by terms.
+// BDC concepts come first in `items`, followed by terms.
 export type SearchItem =
-  | ({ __typename: "BdcVariable" } & BdcVariable)
-  | ({ __typename: "Term" } & Term);
+  ({ __typename: "BdcConcept" } & BdcConcept) | ({ __typename: "Term" } & Term);
 
 export interface TermsPage {
   items: SearchItem[];
@@ -79,7 +76,7 @@ export interface TermsPage {
   limit: number;
   offset: number;
   hasMore: boolean;
-  bdcVariableCount: number;
+  bdcConceptCount: number;
 }
 
 export interface ResolveTermsData {
@@ -87,7 +84,7 @@ export interface ResolveTermsData {
 }
 
 export function getSearchItemKey(item: SearchItem): string {
-  return item.__typename === "BdcVariable"
-    ? `BdcVariable:${item.name}`
+  return item.__typename === "BdcConcept"
+    ? `BdcConcept:${item.conceptType}`
     : `Term:${item.id}`;
 }

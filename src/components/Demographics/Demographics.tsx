@@ -73,7 +73,7 @@ export default function Demographics({
   );
 }
 
-function Breakdown({ summary }: { summary: SummaryResponse }) {
+const Breakdown = ({ summary }: { summary: SummaryResponse }) => {
   const theme = useTheme();
   const [slot, setSlot] = useState<DemographicSlot>("sex");
 
@@ -155,4 +155,4 @@ function Breakdown({ summary }: { summary: SummaryResponse }) {
       </Typography>
     </>
   );
-}
+};

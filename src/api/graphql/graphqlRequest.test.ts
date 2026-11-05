@@ -12,20 +12,18 @@ interface EchoVariables {
   text: string;
 }
 
-function echo(signal?: AbortSignal) {
-  return graphqlRequest<EchoData, EchoVariables>({
+const echo = (signal?: AbortSignal) =>
+  graphqlRequest<EchoData, EchoVariables>({
     endpoint: ENDPOINT,
     query: QUERY,
     variables: { text: "hello" },
     signal,
   });
-}
 
-function mockResponse(body: unknown, status = 200) {
-  return jest
+const mockResponse = (body: unknown, status = 200) =>
+  jest
     .spyOn(globalThis, "fetch")
     .mockResolvedValue(new Response(JSON.stringify(body), { status }));
-}
 
 describe("graphqlRequest", () => {
   beforeEach(() => {

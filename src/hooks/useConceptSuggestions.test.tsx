@@ -31,7 +31,7 @@ const suggestionsPage: SuggestionsPage = {
   total: 2,
 };
 
-function createWrapper() {
+const createWrapper = () => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -39,17 +39,15 @@ function createWrapper() {
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
   return { client, wrapper };
-}
+};
 
-function wrapper({ children }: { children: ReactNode }) {
-  return createWrapper().wrapper({ children });
-}
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createWrapper().wrapper({ children });
 
-function mockResponse(body: unknown) {
-  return jest
+const mockResponse = (body: unknown) =>
+  jest
     .spyOn(globalThis, "fetch")
     .mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
-}
 
 describe("useConceptSuggestions", () => {
   beforeEach(() => {

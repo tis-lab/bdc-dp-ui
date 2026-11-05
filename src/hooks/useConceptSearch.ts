@@ -16,10 +16,10 @@ interface ConceptSearchOptions {
  * Resolves `searchText` to BDC concepts. Runs only when the text is non-empty;
  * the caller controls when `searchText` changes.
  */
-export function useConceptSearch(
+export const useConceptSearch = (
   searchText: string,
   { limit = 20, offset = 0 }: ConceptSearchOptions = {},
-) {
+) => {
   const query = searchText.trim();
 
   return useQuery({
@@ -45,4 +45,4 @@ export function useConceptSearch(
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[1] === query ? previous : undefined,
   });
-}
+};

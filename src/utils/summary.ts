@@ -13,8 +13,8 @@ export interface CategoryCount {
 const LOWERCASE_WORDS = new Set(["or", "and", "of"]);
 
 /** "BLACK_OR_AFRICAN_AMERICAN" → "Black or African American". */
-export function humanize(code: string): string {
-  return code
+export const humanize = (code: string): string =>
+  code
     .toLowerCase()
     .split("_")
     .map((word, i) =>
@@ -23,27 +23,24 @@ export function humanize(code: string): string {
         : word.charAt(0).toUpperCase() + word.slice(1),
     )
     .join(" ");
-}
 
 /** Estimated: a participant in two studies is counted twice. */
-export function cohortParticipants(summary: SummaryResponse): number {
-  return summary.studies.reduce((sum, s) => sum + s.participant_count, 0);
-}
+export const cohortParticipants = (summary: SummaryResponse): number =>
+  summary.studies.reduce((sum, s) => sum + s.participant_count, 0);
 
 /** Whole-number percentage; 0 for an empty cohort rather than NaN. */
-export function percentOf(count: number, total: number): number {
-  return total > 0 ? Math.round((count / total) * 100) : 0;
-}
+export const percentOf = (count: number, total: number): number =>
+  total > 0 ? Math.round((count / total) * 100) : 0;
 
 /**
  * Counts per category summed across studies, largest first. The remainder of
  * the cohort is "Not reported" (missing, or below min_count). Empty when no
  * study reports the slot.
  */
-export function demographicBreakdown(
+export const demographicBreakdown = (
   summary: SummaryResponse,
   slot: DemographicSlot,
-): CategoryCount[] {
+): CategoryCount[] => {
   const counts = new Map<string, number>();
   let reported = false;
 
@@ -66,4 +63,4 @@ export function demographicBreakdown(
     cohortParticipants(summary) - rows.reduce((sum, r) => sum + r.count, 0);
 
   return notReported > 0 ? [...rows, { label: "Not reported", count: notReported }] : rows;
-}
+};

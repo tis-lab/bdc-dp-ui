@@ -7,7 +7,7 @@ import {
   type AutocompleteVariables,
 } from "../api/graphql/queries/autocomplete";
 
-export function useConceptSuggestions(searchText: string) {
+export const useConceptSuggestions = (searchText: string) => {
   const query = searchText.trim();
 
   return useQuery({
@@ -29,4 +29,4 @@ export function useConceptSuggestions(searchText: string) {
     },
     enabled: query.length > 0,
   });
-}
+};

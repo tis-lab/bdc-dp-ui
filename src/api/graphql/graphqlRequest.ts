@@ -11,12 +11,12 @@ interface GraphQLResponse<TData> {
 }
 
 /** POSTs one GraphQL operation to `endpoint` and returns its `data`. */
-export async function graphqlRequest<TData, TVariables extends object>({
+export const graphqlRequest = async <TData, TVariables extends object>({
   endpoint,
   query,
   variables,
   signal,
-}: GraphQLRequest<TVariables>): Promise<TData> {
+}: GraphQLRequest<TVariables>): Promise<TData> => {
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -35,4 +35,4 @@ export async function graphqlRequest<TData, TVariables extends object>({
     throw new Error("GraphQL response contained no data");
   }
   return body.data;
-}
+};

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getGraphQLEndpoint } from "../api/config";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
@@ -7,7 +8,12 @@ import {
   type CohortSummaryData,
   type CohortSummaryVariables,
 } from "../api/graphql/queries/cohortSummary";
-import { illustrateSummary } from "../placeholders";
+import {
+  SEARCH_CONDITIONS_QUERY,
+  type SearchConditionsData,
+  type SearchConditionsVariables,
+} from "../api/graphql/queries/searchConditions";
+import { illustrateSummary, withParticipants } from "../placeholders";
 
 export type CriteriaKind = "include" | "exclude";
 
@@ -23,10 +29,29 @@ export interface Criteria {
 const conceptOf = (item: SearchItem) =>
   item.__typename === "Term" ? item.id : item.conceptType;
 
+const fetchConditionCount = async (concept: string, signal: AbortSignal) => {
+  const data = await graphqlRequest<
+    SearchConditionsData,
+    SearchConditionsVariables
+  >({
+    endpoint: getGraphQLEndpoint(),
+    query: SEARCH_CONDITIONS_QUERY,
+    variables: { keyword: `PRESENT|ONESELF|${concept}` },
+    signal,
+  });
+  return Number(data.searchConditions.totalHits);
+};
+
 /** Runs only once a concept is included or excluded. */
-export function useCohortSummary(criteria: Criteria) {
-  const include = criteria.include.map(conceptOf).sort();
-  const exclude = criteria.exclude.map(conceptOf).sort();
+export const useCohortSummary = (criteria: Criteria) => {
+  const include = useMemo(
+    () => criteria.include.map(conceptOf).sort(),
+    [criteria.include],
+  );
+  const exclude = useMemo(
+    () => criteria.exclude.map(conceptOf).sort(),
+    [criteria.exclude],
+  );
   const enabled = include.length + exclude.length > 0;
 
   return useQuery({
@@ -44,8 +69,12 @@ export function useCohortSummary(criteria: Criteria) {
         signal,
       });
       if (!data?.summary) throw new Error("Missing summary response");
+      if (include.length === 1 && exclude.length === 0) {
+        const count = await fetchConditionCount(include[0], signal);
+        return withParticipants(data.summary, count);
+      }
       return illustrateSummary(data.summary, criteria);
     },
     enabled,
   });
-}
+};

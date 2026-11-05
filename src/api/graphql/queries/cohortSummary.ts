@@ -26,8 +26,8 @@ export interface SummaryResponse {
 }
 
 export const COHORT_SUMMARY_QUERY = `
-  query ReadSummary($sourceId: ID!, $include: [ID!]!, $exclude: [ID!]!) {
-    summary(sourceId: $sourceId, include: $include, exclude: $exclude) {
+  query GetSummary($filter: SummaryFilterInput) {
+    summary(filter: $filter) {
       studies {
         research_study
         participant_count
@@ -42,10 +42,21 @@ export const COHORT_SUMMARY_QUERY = `
   }
 `;
 
+/**
+ * INCLUDE matches a recorded PRESENT condition and EXCLUDE a recorded ABSENT
+ * one; EXCLUDE is not "everyone without it". Relationship defaults to ONESELF.
+ */
+export type ConditionSelection = "INCLUDE" | "EXCLUDE";
+
+/** Exactly one field per node; nesting is the parentheses. Groups are never empty. */
+export type SummaryFilter =
+  | { condition: { concept: string; selection: ConditionSelection } }
+  | { and: SummaryFilter[] }
+  | { or: SummaryFilter[] };
+
 export interface CohortSummaryVariables {
-  sourceId: string;
-  include: string[];
-  exclude: string[];
+  /** null summarizes everyone. */
+  filter: SummaryFilter | null;
 }
 
 export interface CohortSummaryData {

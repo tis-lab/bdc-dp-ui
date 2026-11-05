@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useCohortSummary, type Criteria } from "./useCohortSummary";
+import {
+  summaryFilter,
+  useCohortSummary,
+  type Criteria,
+} from "./useCohortSummary";
 import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
 import { COHORT_SUMMARY_QUERY } from "../api/graphql/queries/cohortSummary";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
@@ -26,6 +30,13 @@ const t2d: Criteria = {
   match: "all",
 };
 
+const include = (concept: string) => ({
+  condition: { concept, selection: "INCLUDE" },
+});
+const exclude = (concept: string) => ({
+  condition: { concept, selection: "EXCLUDE" },
+});
+
 const wrapper = ({ children }: { children: ReactNode }) => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -33,17 +44,44 @@ const wrapper = ({ children }: { children: ReactNode }) => {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 };
 
-/** Answers searchConditions with 82 and everything else with `body`. */
 const mockResponse = (body: unknown) =>
-  jest.spyOn(globalThis, "fetch").mockImplementation(async (_, init) => {
-    const reply = String(init?.body).includes("searchConditions")
-      ? { data: { searchConditions: { totalHits: "82" } } }
-      : body;
-    return new Response(JSON.stringify(reply), { status: 200 });
-  });
+  jest
+    .spyOn(globalThis, "fetch")
+    .mockImplementation(
+      async () => new Response(JSON.stringify(body), { status: 200 }),
+    );
 
 const sentBody = (fetchSpy: ReturnType<typeof mockResponse>, call = 0) =>
   JSON.parse(fetchSpy.mock.calls[call][1]?.body as string);
+
+describe("summaryFilter", () => {
+  it("is null with nothing selected", () => {
+    expect(summaryFilter([], [], "all")).toBeNull();
+  });
+
+  it("sends one concept as a single condition, without a group", () => {
+    expect(summaryFilter(["A"], [], "all")).toEqual(include("A"));
+    expect(summaryFilter([], ["C"], "all")).toEqual(exclude("C"));
+  });
+
+  it("combines includes with AND or OR", () => {
+    expect(summaryFilter(["A", "B"], [], "all")).toEqual({
+      and: [include("A"), include("B")],
+    });
+    expect(summaryFilter(["A", "B"], [], "any")).toEqual({
+      or: [include("A"), include("B")],
+    });
+  });
+
+  it("requires every exclude alongside the includes", () => {
+    expect(summaryFilter(["A", "B"], ["C", "D"], "any")).toEqual({
+      and: [{ or: [include("A"), include("B")] }, exclude("C"), exclude("D")],
+    });
+    expect(summaryFilter(["A"], ["C"], "any")).toEqual({
+      and: [include("A"), exclude("C")],
+    });
+  });
+});
 
 describe("useCohortSummary", () => {
   beforeEach(() => {
@@ -63,7 +101,7 @@ describe("useCohortSummary", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("sends the summary query for the t2d source", async () => {
+  it("sends the summary query with an include filter, and returns the summary", async () => {
     const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
 
     const { result } = renderHook(() => useCohortSummary(t2d), { wrapper });
@@ -73,8 +111,9 @@ describe("useCohortSummary", () => {
     expect(url).toBe(ENDPOINT);
     expect(sentBody(fetchSpy)).toEqual({
       query: COHORT_SUMMARY_QUERY,
-      variables: { sourceId: "t2d", include: ["MONDO:0005148"], exclude: [] },
+      variables: { filter: include("MONDO:0005148") },
     });
+    expect(result.current.data).toEqual(t2dSummary);
   });
 
   it("sends a BDC concept's code", async () => {
@@ -100,10 +139,12 @@ describe("useCohortSummary", () => {
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(sentBody(fetchSpy).variables.include).toEqual(["MONDO:0005044"]);
+    expect(sentBody(fetchSpy).variables.filter).toEqual(
+      include("MONDO:0005044"),
+    );
   });
 
-  it("sends included and excluded concept IDs", async () => {
+  it("sends included and excluded concepts in a stable order", async () => {
     const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
 
     const { result } = renderHook(
@@ -117,48 +158,35 @@ describe("useCohortSummary", () => {
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(sentBody(fetchSpy).variables).toEqual({
-      sourceId: "t2d",
-      include: ["MONDO:0005148", "MONDO:0005267"],
-      exclude: ["MONDO:0005252"],
+    expect(sentBody(fetchSpy).variables.filter).toEqual({
+      and: [
+        { and: [include("MONDO:0005148"), include("MONDO:0005267")] },
+        exclude("MONDO:0005252"),
+      ],
     });
   });
 
-  it("counts one included concept from searchConditions", async () => {
-    const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
-
-    const { result } = renderHook(() => useCohortSummary(t2d), { wrapper });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(sentBody(fetchSpy, 1).variables).toEqual({
-      keyword: "PRESENT|ONESELF|MONDO:0005148",
-    });
-    // 82 spread across the API's 480 + 460
-    expect(
-      result.current.data?.studies.map((s) => s.participant_count),
-    ).toEqual([42, 40]);
-    expect(result.current.data?.studies[0].demographics).toEqual(
-      t2dSummary.studies[0].demographics,
-    );
-  });
-
-  it("surfaces GraphQL errors, such as a concept the source doesn't support", async () => {
+  it("surfaces GraphQL errors, such as a concept the API can't filter on", async () => {
     mockResponse({
       data: { summary: null },
-      errors: [
-        {
-          message:
-            "The selected concept is not supported by this summary source.",
-        },
-      ],
+      errors: [{ message: "Invalid concept CURIE: ATC:C02" }],
     });
 
     const { result } = renderHook(() => useCohortSummary(t2d), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(result.current.error?.message).toBe(
-      "The selected concept is not supported by this summary source.",
+      "Invalid concept CURIE: ATC:C02",
     );
+  });
+
+  it("fails rather than showing zero when the summary is null", async () => {
+    mockResponse({ data: { summary: null } });
+
+    const { result } = renderHook(() => useCohortSummary(t2d), { wrapper });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.error?.message).toBe("Missing summary response");
   });
 
   it("is loading again, without the previous summary, for a new selection", async () => {
@@ -175,19 +203,25 @@ describe("useCohortSummary", () => {
     expect(result.current.data).toBeUndefined();
   });
 
-  it("asks again when AND/OR changes, though the API can't take it yet", async () => {
+  it("asks again with OR when AND/OR changes", async () => {
     const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
+    const two: Criteria = {
+      include: [term("MONDO:0005148"), term("HP:0000822")],
+      exclude: [],
+      match: "all",
+    };
     const { result, rerender } = renderHook(
       ({ criteria }) => useCohortSummary(criteria),
-      { wrapper, initialProps: { criteria: t2d } },
+      { wrapper, initialProps: { criteria: two } },
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    rerender({ criteria: { ...t2d, match: "any" } });
+    rerender({ criteria: { ...two, match: "any" } });
 
-    // A summary and a searchConditions request per selection
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(4));
-    expect(sentBody(fetchSpy, 2).variables).not.toHaveProperty("match");
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+    expect(sentBody(fetchSpy, 1).variables.filter).toEqual({
+      or: [include("HP:0000822"), include("MONDO:0005148")],
+    });
   });
 
   it("keeps nothing once every criterion is removed", async () => {

@@ -4,9 +4,27 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CohortBuilder from "./CohortBuilder";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
+import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
 
 const ORIGINAL_ENV = process.env;
-const AVAILABLE = "500";
+const AVAILABLE = "2,000";
+
+const studiesOf = (...counts: number[]): SummaryResponse => ({
+  studies: counts.map((participant_count, i) => ({
+    research_study: `study_${i}`,
+    participant_count,
+  })),
+});
+
+/** The unfiltered summary is everyone; a filter's top node picks the cohort. */
+const summaryFor = (filter: Record<string, unknown> | null) =>
+  !filter
+    ? studiesOf(1000, 1000)
+    : "and" in filter
+      ? studiesOf(250, 200)
+      : "or" in filter
+        ? studiesOf(600, 600)
+        : t2dSummary;
 
 const mockHypertension: SearchItem = {
   __typename: "Term",
@@ -55,12 +73,8 @@ beforeEach(() => {
     VITE_GRAPHQL_URL: "https://graphql.test/graphql",
   };
   jest.spyOn(globalThis, "fetch").mockImplementation(async (_, init) => {
-    const body = String(init?.body);
-    const data = body.includes("searchProbe")
-      ? { searchProbe: { totalHits: AVAILABLE } }
-      : body.includes("searchConditions")
-        ? { searchConditions: { totalHits: "82" } }
-        : { summary: t2dSummary };
+    const { variables } = JSON.parse(init?.body as string);
+    const data = { summary: summaryFor(variables.filter) };
     return new Response(JSON.stringify({ data }), { status: 200 });
   });
 });
@@ -169,7 +183,7 @@ describe("CohortBuilder", () => {
   });
 
   describe("cohort overview", () => {
-    it("asks only for the available total on page load, and shows it", async () => {
+    it("asks only for the unfiltered summary on page load, and shows its total", async () => {
       renderBuilder();
 
       expect(await screen.findByText(AVAILABLE)).toBeInTheDocument();
@@ -177,7 +191,7 @@ describe("CohortBuilder", () => {
         screen.getByText("Include a concept to see its demographic breakdown."),
       ).toBeInTheDocument();
       expect(sentBodies()).toHaveLength(1);
-      expect(sentBodies()[0].query).toContain("searchProbe");
+      expect(sentBodies()[0].variables).toEqual({ filter: null });
     });
 
     it("shows an error instead of the counts when the page load request fails", async () => {
@@ -197,16 +211,27 @@ describe("CohortBuilder", () => {
 
       await user.click(screen.getByRole("button", { name: "include result" }));
 
-      // One include is counted by searchConditions
-      expect(await screen.findByText("82")).toBeInTheDocument();
+      // 480 + 460 from the API's studies
+      expect(await screen.findByText("940")).toBeInTheDocument();
       expect(screen.getByText(`of ${AVAILABLE} available`)).toBeInTheDocument();
       expect(
-        screen.getByText("82 participants · 2 studies"),
+        screen.getByText("940 participants · 2 studies"),
       ).toBeInTheDocument();
-      expect(sentBodies().slice(-2).map((b) => b.variables)).toEqual([
-        { sourceId: "t2d", include: ["HP:0000822"], exclude: [] },
-        { keyword: "PRESENT|ONESELF|HP:0000822" },
-      ]);
+      expect(sentBodies().at(-1).variables).toEqual({
+        filter: { condition: { concept: "HP:0000822", selection: "INCLUDE" } },
+      });
+    });
+
+    it("sends an exclude as an EXCLUDE condition", async () => {
+      const user = userEvent.setup();
+      renderBuilder();
+
+      await user.click(screen.getByRole("button", { name: "exclude result" }));
+
+      expect(await screen.findByText("940")).toBeInTheDocument();
+      expect(sentBodies().at(-1).variables).toEqual({
+        filter: { condition: { concept: "HP:0000822", selection: "EXCLUDE" } },
+      });
     });
 
     it("offers AND/OR once two concepts are included, and the count follows it", async () => {
@@ -214,7 +239,7 @@ describe("CohortBuilder", () => {
       renderBuilder();
 
       await user.click(screen.getByRole("button", { name: "include result" }));
-      await screen.findByText("82");
+      await screen.findByText("940");
       expect(
         screen.queryByRole("group", { name: "Inclusion logic" }),
       ).toBeNull();
@@ -226,11 +251,12 @@ describe("CohortBuilder", () => {
       expect(
         within(match).getByRole("button", { name: "All" }),
       ).toHaveAttribute("aria-pressed", "true");
-      // Placeholder counts: 940 from the API, narrowed by AND, widened by OR
-      expect(await screen.findByText("940")).toBeInTheDocument();
+      expect(await screen.findByText("450")).toBeInTheDocument();
+      expect(sentBodies().at(-1).variables.filter).toHaveProperty("and");
 
       await user.click(within(match).getByRole("button", { name: "Any" }));
-      expect(await screen.findByText("1,040")).toBeInTheDocument();
+      expect(await screen.findByText("1,200")).toBeInTheDocument();
+      expect(sentBodies().at(-1).variables.filter).toHaveProperty("or");
     });
 
     it("goes back to everyone available once every criterion is removed", async () => {
@@ -238,7 +264,7 @@ describe("CohortBuilder", () => {
       renderBuilder();
 
       await user.click(screen.getByRole("button", { name: "include result" }));
-      await screen.findByText("82");
+      await screen.findByText("940");
       await user.click(screen.getByRole("button", { name: "Remove" }));
 
       expect(await screen.findByText(AVAILABLE)).toBeInTheDocument();

@@ -42,11 +42,6 @@ export const COHORT_SUMMARY_QUERY = `
   }
 `;
 
-/**
- * INCLUDE matches a recorded PRESENT condition; EXCLUDE matches a recorded
- * ABSENT condition, not the absence of a record. Relationship defaults to
- * ONESELF.
- */
 export type ConditionSelection = "INCLUDE" | "EXCLUDE";
 
 /** One field per node; nesting defines grouping. Groups must be non-empty. */

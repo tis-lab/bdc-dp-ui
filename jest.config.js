@@ -10,6 +10,8 @@ export default {
   coverageReporters: ["json", "lcov", "cobertura", "html", "text"],
   moduleNameMapper: {
     "^echarts-for-react(/.*)?$": "<rootDir>/src/test/EchartsStub.tsx",
+    "^echarts/(core|charts|components|renderers)$":
+      "<rootDir>/src/test/echartsCoreStub.ts",
     "(^|/)viteEnv$": "<rootDir>/src/test/viteEnv.ts",
   },
 };

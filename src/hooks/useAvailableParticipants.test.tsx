@@ -35,7 +35,7 @@ describe("useAvailableParticipants", () => {
     process.env = ORIGINAL_ENV;
   });
 
-  it("sends pageLoadSnapshot and returns its unique participant count", async () => {
+  it("sends pageLoadSnapshot and returns its participant count", async () => {
     const fetchSpy = mockResponse(snapshot(1000));
 
     const { result } = renderHook(() => useAvailableParticipants(), {

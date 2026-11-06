@@ -19,7 +19,7 @@ import {
 export interface Props {
   /** Current criteria's summary; if absent, the available total is shown. */
   filteredSummary?: SummaryResponse;
-  /** Unique participants available; the denominator for the cohort count. */
+  /** Participants available; the denominator for the cohort count. */
   availableTotal: number;
   /** First load only; later updates keep the current counts on screen. */
   isLoading?: boolean;
@@ -48,6 +48,8 @@ export default function CohortSnapshot({
         type: "pie",
         radius: ["82%", "100%"],
         startAngle: 90,
+        // Draw an all-zero ring empty rather than split evenly
+        stillShowZeroSum: false,
         silent: true,
         animation: false,
         label: { show: false },

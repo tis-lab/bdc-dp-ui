@@ -7,9 +7,9 @@ import {
 } from "../api/graphql/queries/pageLoadSnapshot";
 
 /**
- * Unique participants available, from pageLoadSnapshot. Fetched once per
- * session. Throws when the count is missing or suppressed rather than
- * returning 0.
+ * Participants available, from pageLoadSnapshot. Fetched once per session.
+ * Errors when the count is missing or suppressed, so the snapshot shows an
+ * error instead of 0.
  */
 export const useAvailableParticipants = () =>
   useQuery({

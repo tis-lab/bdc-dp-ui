@@ -17,7 +17,6 @@ interface SnapshotCount {
 
 export interface PageLoadSnapshotData {
   pageLoadSnapshot: {
-    /** Unique participants, not summed across studies. */
     participantCount: SnapshotCount;
   } | null;
 }

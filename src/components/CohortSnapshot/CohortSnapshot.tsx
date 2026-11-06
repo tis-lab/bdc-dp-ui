@@ -1,8 +1,8 @@
 import { useId, useMemo } from "react";
 import { Alert, Typography, useTheme } from "@mui/material";
-import ReactECharts from "echarts-for-react";
+import ReactEChartsCore from "echarts-for-react/lib/core";
 import type { SummaryResponse } from "../../api/graphql/queries/cohortSummary";
-import { ECHARTS_FILL } from "../../charts";
+import { ECHARTS_FILL, echarts } from "../../charts";
 import { cohortParticipants } from "../../utils/summary";
 import { MutedSkeleton } from "../LoadingSkeleton";
 import { PanelSection, PanelTitle } from "../Panel/Panel.styles";
@@ -92,7 +92,11 @@ export default function CohortSnapshot({
       ) : (
         <>
           <Donut>
-            <ReactECharts option={donut} style={ECHARTS_FILL} />
+            <ReactEChartsCore
+              echarts={echarts}
+              option={donut}
+              style={ECHARTS_FILL}
+            />
             <DonutCenter>
               <Typography variant="h5" component="p">
                 {participants.toLocaleString()}

@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getGraphQLEndpoint } from "../api/config";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
@@ -7,9 +6,7 @@ import {
   COHORT_SUMMARY_QUERY,
   type CohortSummaryData,
   type CohortSummaryVariables,
-  type ConditionSelection,
   type SummaryFilter,
-  type SummaryResponse,
 } from "../api/graphql/queries/cohortSummary";
 
 export type CriteriaKind = "include" | "exclude";
@@ -25,10 +22,6 @@ export interface Criteria {
 
 const conceptOf = (item: SearchItem) =>
   item.__typename === "Term" ? item.id : item.conceptType;
-
-const condition =
-  (selection: ConditionSelection) =>
-  (concept: string): SummaryFilter => ({ condition: { concept, selection } });
 
 /** Groups two or more nodes; returns one node as-is, null for none. */
 const group = (
@@ -51,49 +44,40 @@ export const summaryFilter = (
 ): SummaryFilter | null => {
   const included = group(
     match === "any" ? "or" : "and",
-    include.map(condition("INCLUDE")),
+    include.map((concept): SummaryFilter => ({
+      condition: { concept, selection: "INCLUDE" },
+    })),
   );
   return group("and", [
     ...(included ? [included] : []),
-    ...exclude.map(condition("EXCLUDE")),
+    ...exclude.map((concept): SummaryFilter => ({
+      condition: { concept, selection: "EXCLUDE" },
+    })),
   ]);
-};
-
-/** Throws on GraphQL errors or a null summary instead of returning empty. */
-export const fetchSummary = async (
-  filter: SummaryFilter | null,
-  signal: AbortSignal,
-): Promise<SummaryResponse> => {
-  const data = await graphqlRequest<CohortSummaryData, CohortSummaryVariables>(
-    {
-      endpoint: getGraphQLEndpoint(),
-      query: COHORT_SUMMARY_QUERY,
-      variables: { filter },
-      signal,
-    },
-  );
-  if (!data?.summary) throw new Error("Missing summary response");
-  return data.summary;
 };
 
 /** Disabled until at least one concept is included or excluded. */
 export const useCohortSummary = (criteria: Criteria) => {
-  const include = useMemo(
-    () => criteria.include.map(conceptOf).sort(),
-    [criteria.include],
-  );
-  const exclude = useMemo(
-    () => criteria.exclude.map(conceptOf).sort(),
-    [criteria.exclude],
-  );
-  const filter = useMemo(
-    () => summaryFilter(include, exclude, criteria.match),
-    [include, exclude, criteria.match],
-  );
+  const include = criteria.include.map(conceptOf).sort();
+  const exclude = criteria.exclude.map(conceptOf).sort();
+  const filter = summaryFilter(include, exclude, criteria.match);
 
   return useQuery({
     queryKey: ["cohortSummary", filter],
-    queryFn: ({ signal }) => fetchSummary(filter, signal),
+    queryFn: async ({ signal }) => {
+      const data = await graphqlRequest<
+        CohortSummaryData,
+        CohortSummaryVariables
+      >({
+        endpoint: getGraphQLEndpoint(),
+        query: COHORT_SUMMARY_QUERY,
+        variables: { filter },
+        signal,
+      });
+      // Fail rather than show a failed request as zero.
+      if (!data?.summary) throw new Error("Missing summary response");
+      return data.summary;
+    },
     enabled: filter !== null,
   });
 };

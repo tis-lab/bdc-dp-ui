@@ -10,7 +10,7 @@ export const PAGE_LOAD_SNAPSHOT_QUERY = `
 `;
 
 /** `value` is null when the count is suppressed below the reporting threshold. */
-export interface SnapshotCount {
+interface SnapshotCount {
   value: number | null;
   suppressed: boolean;
 }

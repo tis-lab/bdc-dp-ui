@@ -42,7 +42,7 @@ export const COHORT_SUMMARY_QUERY = `
   }
 `;
 
-export type ConditionSelection = "INCLUDE" | "EXCLUDE";
+type ConditionSelection = "INCLUDE" | "EXCLUDE";
 
 /** One field per node; nesting defines grouping. Groups must be non-empty. */
 export type SummaryFilter =

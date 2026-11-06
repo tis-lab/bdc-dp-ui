@@ -2,6 +2,7 @@ import type {
   DemographySummary,
   SummaryResponse,
 } from "../api/graphql/queries/cohortSummary";
+import { enumToLabel } from "./text";
 
 export type DemographicSlot = DemographySummary["summarized_slot"];
 
@@ -19,20 +20,6 @@ export interface CohortTotals {
 /** Shown wherever totals from cohortTotals are displayed. */
 export const SUMMED_TOTALS_NOTE =
   "Illustrative totals based on synthetic data; participants may be counted more than once across studies.";
-
-const LOWERCASE_WORDS = new Set(["or", "and", "of"]);
-
-/** "BLACK_OR_AFRICAN_AMERICAN" → "Black or African American". */
-export const humanize = (code: string): string =>
-  code
-    .toLowerCase()
-    .split("_")
-    .map((word, i) =>
-      i > 0 && LOWERCASE_WORDS.has(word)
-        ? word
-        : word.charAt(0).toUpperCase() + word.slice(1),
-    )
-    .join(" ");
 
 /** Whole-number percentage; 0 for an empty cohort rather than NaN. */
 export const percentOf = (count: number, total: number): number =>
@@ -60,7 +47,7 @@ const sumBreakdown = (
     reported = true;
     for (const value of group.values ?? []) {
       const codes = slot === "race" ? (value.race ?? []) : [value[slot] ?? ""];
-      const label = codes.filter(Boolean).map(humanize).join(", ");
+      const label = codes.filter(Boolean).map(enumToLabel).join(", ");
       if (label) counts.set(label, (counts.get(label) ?? 0) + value.participant_count);
     }
   }

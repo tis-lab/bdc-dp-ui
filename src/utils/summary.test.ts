@@ -1,15 +1,5 @@
-import { cohortTotals, humanize, percentOf } from "./summary";
+import { cohortTotals, percentOf } from "./summary";
 import { t2dFemaleSummary, t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
-
-describe("humanize", () => {
-  it.each([
-    ["FEMALE", "Female"],
-    ["BLACK_OR_AFRICAN_AMERICAN", "Black or African American"],
-    ["NOT_HISPANIC_OR_LATINO", "Not Hispanic or Latino"],
-  ])("%s → %s", (code, label) => {
-    expect(humanize(code)).toBe(label);
-  });
-});
 
 describe("cohortTotals", () => {
   it("sums participants and counts studies", () => {

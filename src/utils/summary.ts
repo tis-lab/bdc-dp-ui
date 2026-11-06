@@ -28,11 +28,7 @@ export const percentOf = (count: number, total: number): number =>
 const sumParticipants = (summary: SummaryResponse): number =>
   summary.studies.reduce((sum, s) => sum + s.participant_count, 0);
 
-/**
- * Counts per category summed across studies, largest first. The remainder of
- * the cohort is "Not reported" (missing, or below min_count). Empty when no
- * study reports the slot.
- */
+/** Per-category counts summed across studies, largest first; remainder is "Not reported". */
 const sumBreakdown = (
   summary: SummaryResponse,
   slot: DemographicSlot,
@@ -61,11 +57,7 @@ const sumBreakdown = (
   return notReported > 0 ? [...rows, { label: "Not reported", count: notReported }] : rows;
 };
 
-/**
- * Cohort totals from a summary. Temporary: sums per-study counts and
- * demographic values, assuming participants are distinct across studies.
- * Replace with global counts once the summary endpoint provides them.
- */
+/** Temporary: sums per-study counts until the endpoint returns global totals. */
 export const cohortTotals = (summary: SummaryResponse): CohortTotals => {
   const participants = sumParticipants(summary);
   return {

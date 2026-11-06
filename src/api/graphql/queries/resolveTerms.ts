@@ -41,8 +41,7 @@ export interface ResolveTermsVariables {
 
 // Nullability mirrors the GraphQL schema.
 
-// `studyCount` is the number of studies the concept is harmonized in, not data
-// availability; 0 is common.
+// `studyCount`: studies the concept is harmonized in, not data availability.
 export interface BdcCoverage {
   studyCount: number;
   studies: string[];

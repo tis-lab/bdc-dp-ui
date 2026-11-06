@@ -24,11 +24,10 @@ const SLOTS: { slot: DemographicSlot; label: string }[] = [
 ];
 
 export interface Props {
-  /** Current criteria's summary; if absent, the empty state is shown. */
+  /** Summary for the current criteria; absent shows the empty state. */
   filteredSummary?: SummaryResponse;
-  /** First load only; later updates keep the current chart on screen. */
+  /** First load only. */
   isLoading?: boolean;
-  /** Replaces the chart so a failure is not shown as the empty state. */
   error?: Error | null;
 }
 

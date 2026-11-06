@@ -17,13 +17,12 @@ import {
 // ----------------------------------------------------------------------
 
 export interface Props {
-  /** Current criteria's summary; if absent, the available total is shown. */
+  /** Summary for the current criteria; absent shows the available total. */
   filteredSummary?: SummaryResponse;
-  /** Participants available, or null when unavailable. */
+  /** null when unavailable. */
   availableTotal: number | null;
-  /** First load only; later updates keep the current counts on screen. */
+  /** First load only. */
   isLoading?: boolean;
-  /** Replaces the counts so a failure is not shown as the full population. */
   error?: Error | null;
 }
 
@@ -47,12 +46,10 @@ export default function CohortSnapshot({
         type: "pie",
         radius: ["82%", "100%"],
         startAngle: 90,
-        // Draw an all-zero ring empty rather than split evenly
         stillShowZeroSum: false,
         silent: true,
         animation: false,
         label: { show: false },
-        // Without an available total there is no proportion to draw
         data: [
           {
             name: "In cohort",

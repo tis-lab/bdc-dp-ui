@@ -33,10 +33,7 @@ const group = (
   return op === "and" ? { and: nodes } : { or: nodes };
 };
 
-/**
- * Builds the summary filter: includes are combined by `match`, and each exclude
- * is ANDed with the result. Returns null when no criteria are selected.
- */
+/** Includes combined by `match`, excludes ANDed; null when empty. */
 export const summaryFilter = (
   include: string[],
   exclude: string[],
@@ -74,7 +71,6 @@ export const useCohortSummary = (criteria: Criteria) => {
         variables: { filter },
         signal,
       });
-      // Fail rather than show a failed request as zero.
       if (!data?.summary) throw new Error("Missing summary response");
       return data.summary;
     },

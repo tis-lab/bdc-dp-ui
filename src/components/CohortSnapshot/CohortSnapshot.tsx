@@ -19,8 +19,8 @@ import {
 export interface Props {
   /** Current criteria's summary; if absent, the available total is shown. */
   filteredSummary?: SummaryResponse;
-  /** Participants available; the denominator for the cohort count. */
-  availableTotal: number;
+  /** Participants available, or null when unavailable. */
+  availableTotal: number | null;
   /** First load only; later updates keep the current counts on screen. */
   isLoading?: boolean;
   /** Replaces the counts so a failure is not shown as the full population. */
@@ -52,15 +52,16 @@ export default function CohortSnapshot({
         silent: true,
         animation: false,
         label: { show: false },
+        // Without an available total there is no proportion to draw
         data: [
           {
             name: "In cohort",
-            value: cohortCount,
+            value: availableTotal === null ? 0 : (cohortCount ?? 0),
             itemStyle: { color: theme.palette.primary.main },
           },
           {
             name: "Not in cohort",
-            value: Math.max(availableTotal - cohortCount, 0),
+            value: Math.max((availableTotal ?? 0) - (cohortCount ?? 0), 0),
             itemStyle: { color: theme.palette.grey[300] },
           },
         ],
@@ -96,11 +97,17 @@ export default function CohortSnapshot({
           <Donut>
             <ReactECharts option={donut} style={ECHARTS_FILL} />
             <DonutCenter>
-              <Typography variant="h5" component="p">
-                {cohortCount.toLocaleString()}
-              </Typography>
+              {cohortCount === null ? (
+                <Typography variant="body1" component="p">
+                  Not available
+                </Typography>
+              ) : (
+                <Typography variant="h5" component="p">
+                  {cohortCount.toLocaleString()}
+                </Typography>
+              )}
               <DonutCaption variant="caption">Estimated Participants</DonutCaption>
-              {filteredSummary && (
+              {filteredSummary && availableTotal !== null && (
                 <DonutCaption variant="caption" color="text.secondary">
                   of {availableTotal.toLocaleString()} available
                 </DonutCaption>

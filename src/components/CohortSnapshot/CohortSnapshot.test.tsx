@@ -115,6 +115,23 @@ describe("CohortSnapshot", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows Not available for an unavailable total", () => {
+    render(<CohortSnapshot availableTotal={null} />);
+
+    expect(screen.getByText("Not available")).toBeInTheDocument();
+    expect(screen.queryByText("0")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("omits the denominator for an unavailable total", () => {
+    render(
+      <CohortSnapshot filteredSummary={t2dSummary} availableTotal={null} />,
+    );
+
+    expect(screen.getByText("940")).toBeInTheDocument();
+    expect(screen.queryByText(/available$/)).toBeNull();
+  });
+
   it("shows the summed totals note only with a summary", () => {
     const { rerender } = render(<CohortSnapshot availableTotal={AVAILABLE} />);
     expect(screen.queryByText(SUMMED_TOTALS_NOTE)).toBeNull();

@@ -79,7 +79,7 @@ export default function CohortBuilder() {
         <Overview aria-label="Cohort overview">
           <CohortSnapshot
             filteredSummary={filteredSummary.data}
-            availableTotal={availableTotal.data ?? 0}
+            availableTotal={availableTotal.data ?? null}
             isLoading={availableTotal.isLoading || filteredSummary.isLoading}
             error={availableTotal.error ?? filteredSummary.error}
           />

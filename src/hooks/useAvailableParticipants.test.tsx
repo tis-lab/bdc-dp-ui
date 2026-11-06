@@ -49,21 +49,32 @@ describe("useAvailableParticipants", () => {
     ).toEqual({ query: PAGE_LOAD_SNAPSHOT_QUERY, variables: {} });
   });
 
-  it("fails rather than showing 0 when the count is suppressed", async () => {
+  it("returns null, not 0, when the count is suppressed", async () => {
     mockResponse(snapshot(null, true));
 
     const { result } = renderHook(() => useAvailableParticipants(), {
       wrapper,
     });
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.error?.message).toBe(
-      "Available participant count is unavailable",
-    );
+    expect(result.current.data).toBeNull();
   });
 
-  it("fails when the snapshot is missing", async () => {
+  it("returns null when the snapshot is missing", async () => {
     mockResponse({ data: { pageLoadSnapshot: null } });
+
+    const { result } = renderHook(() => useAvailableParticipants(), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBeNull();
+  });
+
+  it("fails when the request fails", async () => {
+    jest
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("", { status: 500 }));
 
     const { result } = renderHook(() => useAvailableParticipants(), {
       wrapper,

@@ -8,8 +8,7 @@ import {
 
 /**
  * Participants available, from pageLoadSnapshot. Fetched once per session.
- * Errors when the count is missing or suppressed, so the snapshot shows an
- * error instead of 0.
+ * null when the count is missing or suppressed.
  */
 export const useAvailableParticipants = () =>
   useQuery({
@@ -22,10 +21,7 @@ export const useAvailableParticipants = () =>
         signal,
       });
       const count = data?.pageLoadSnapshot?.participantCount;
-      if (!count || count.suppressed || count.value === null) {
-        throw new Error("Available participant count is unavailable");
-      }
-      return count.value;
+      return count && !count.suppressed ? count.value : null;
     },
     staleTime: Infinity,
   });

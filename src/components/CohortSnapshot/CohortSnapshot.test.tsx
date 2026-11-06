@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import CohortSnapshot from "./CohortSnapshot";
+import { SUMMED_TOTALS_NOTE } from "../../utils/summary";
 import {
   t2dFemaleSummary,
   t2dSummary,
@@ -13,7 +14,10 @@ const AVAILABLE = 5000;
 describe("CohortSnapshot", () => {
   it("is a labelled panel with its subtitle", () => {
     render(
-      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
     );
 
     expect(
@@ -23,7 +27,7 @@ describe("CohortSnapshot", () => {
   });
 
   it("shows everyone available, with a full ring, before there is a summary", () => {
-    render(<CohortSnapshot availableParticipants={AVAILABLE} />);
+    render(<CohortSnapshot availableTotal={AVAILABLE} />);
 
     expect(screen.getByText("5,000")).toBeInTheDocument();
     expect(screen.getByText("In cohort: 5000")).toBeInTheDocument();
@@ -36,7 +40,7 @@ describe("CohortSnapshot", () => {
   it("shows an error instead of the counts when the request fails", () => {
     render(
       <CohortSnapshot
-        availableParticipants={AVAILABLE}
+        availableTotal={AVAILABLE}
         error={new Error("Network down")}
       />,
     );
@@ -47,8 +51,25 @@ describe("CohortSnapshot", () => {
     expect(screen.queryByText("5,000")).toBeNull();
   });
 
+  it("shows the error message from the API", () => {
+    render(
+      <CohortSnapshot
+        availableTotal={AVAILABLE}
+        error={
+          new Error(
+            "concept must be a MONDO or HP CURIE, e.g. MONDO:0005015 or HP:0000822.",
+          )
+        }
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "concept must be a MONDO or HP CURIE",
+    );
+  });
+
   it("shows a skeleton ring instead of the counts on the first load", () => {
-    render(<CohortSnapshot availableParticipants={AVAILABLE} isLoading />);
+    render(<CohortSnapshot availableTotal={AVAILABLE} isLoading />);
 
     expect(
       screen.getByRole("progressbar", { name: "Loading cohort snapshot" }),
@@ -61,7 +82,10 @@ describe("CohortSnapshot", () => {
 
   it("shows the participants summed across studies, out of those available", () => {
     render(
-      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
     );
 
     // 480 + 460
@@ -72,7 +96,10 @@ describe("CohortSnapshot", () => {
 
   it("draws the cohort against the rest of those available", () => {
     render(
-      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
     );
 
     expect(screen.getByText("In cohort: 940")).toBeInTheDocument();
@@ -81,7 +108,10 @@ describe("CohortSnapshot", () => {
 
   it("shows the number of studies in the response", () => {
     render(
-      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
     );
 
     expect(screen.getByText("Studies:").textContent).toBe("Studies: 2");
@@ -89,7 +119,10 @@ describe("CohortSnapshot", () => {
 
   it("notes that the count is an estimate", () => {
     render(
-      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
     );
 
     expect(
@@ -99,15 +132,48 @@ describe("CohortSnapshot", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows Not available for an unavailable total", () => {
+    render(<CohortSnapshot availableTotal={null} />);
+
+    expect(screen.getByText("Not available")).toBeInTheDocument();
+    expect(screen.queryByText("0")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("omits the denominator for an unavailable total", () => {
+    render(
+      <CohortSnapshot filteredSummary={t2dSummary} availableTotal={null} />,
+    );
+
+    expect(screen.getByText("940")).toBeInTheDocument();
+    expect(screen.queryByText(/available$/)).toBeNull();
+  });
+
+  it("shows the summed totals note only with a summary", () => {
+    const { rerender } = render(<CohortSnapshot availableTotal={AVAILABLE} />);
+    expect(screen.queryByText(SUMMED_TOTALS_NOTE)).toBeNull();
+
+    rerender(
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
+    );
+    expect(screen.getByText(SUMMED_TOTALS_NOTE)).toBeInTheDocument();
+  });
+
   it("updates when the summary narrows", () => {
     const { rerender } = render(
-      <CohortSnapshot summary={t2dSummary} availableParticipants={AVAILABLE} />,
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
     );
 
     rerender(
       <CohortSnapshot
-        summary={t2dFemaleSummary}
-        availableParticipants={AVAILABLE}
+        filteredSummary={t2dFemaleSummary}
+        availableTotal={AVAILABLE}
       />,
     );
 

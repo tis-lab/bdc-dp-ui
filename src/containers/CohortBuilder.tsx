@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Container, Divider } from "@mui/material";
 import Search from "./Search";
 import CohortCriteria from "../components/CohortCriteria";
@@ -8,8 +8,9 @@ import {
   useCohortSummary,
   type Criteria,
   type CriteriaKind,
+  type CriteriaMatch,
 } from "../hooks/useCohortSummary";
-import { AVAILABLE_PARTICIPANTS_PLACEHOLDER } from "../placeholders";
+import { useAvailableParticipants } from "../hooks/useAvailableParticipants";
 import {
   getSearchItemKey,
   type SearchItem,
@@ -21,57 +22,72 @@ import { CohortBuilderLayout, Column, Overview } from "./CohortBuilder.styles";
 const without = (items: SearchItem[], item: SearchItem) =>
   items.filter((i) => getSearchItemKey(i) !== getSearchItemKey(item));
 
+// An item is in at most one list, at most once
+const addTo =
+  (kind: CriteriaKind, item: SearchItem) =>
+  (prev: Criteria): Criteria => ({
+    ...prev,
+    include: without(prev.include, item),
+    exclude: without(prev.exclude, item),
+    [kind]: [...without(prev[kind], item), item],
+  });
+
 export default function CohortBuilder() {
   const [criteria, setCriteria] = useState<Criteria>({
     include: [],
     exclude: [],
     match: "all",
   });
-  const summary = useCohortSummary(criteria);
+  const availableTotal = useAvailableParticipants();
+  const filteredSummary = useCohortSummary(criteria);
 
-  // An item is in at most one list, at most once
-  const add = (kind: CriteriaKind) => (item: SearchItem) =>
-    setCriteria((prev) => ({
-      ...prev,
-      include: without(prev.include, item),
-      exclude: without(prev.exclude, item),
-      [kind]: [...without(prev[kind], item), item],
-    }));
-
-  const remove = (kind: CriteriaKind) => (item: SearchItem) =>
-    setCriteria((prev) => ({ ...prev, [kind]: without(prev[kind], item) }));
+  const handleInclude = useCallback(
+    (item: SearchItem) => setCriteria(addTo("include", item)),
+    [],
+  );
+  const handleExclude = useCallback(
+    (item: SearchItem) => setCriteria(addTo("exclude", item)),
+    [],
+  );
+  const remove = useCallback(
+    (kind: CriteriaKind) => (item: SearchItem) =>
+      setCriteria((prev) => ({ ...prev, [kind]: without(prev[kind], item) })),
+    [],
+  );
+  const handleMatchChange = useCallback(
+    (match: CriteriaMatch) => setCriteria((prev) => ({ ...prev, match })),
+    [],
+  );
 
   return (
     <Container maxWidth="lg">
       <CohortBuilderLayout>
         <Column>
           <Search
-            onInclude={add("include")}
-            onExclude={add("exclude")}
+            onInclude={handleInclude}
+            onExclude={handleExclude}
             criteria={criteria}
             onRemove={remove}
           />
           <CohortCriteria
             criteria={criteria}
             onRemove={remove}
-            onMatchChange={(match) =>
-              setCriteria((prev) => ({ ...prev, match }))
-            }
+            onMatchChange={handleMatchChange}
           />
         </Column>
 
         <Overview aria-label="Cohort overview">
           <CohortSnapshot
-            summary={summary.data}
-            availableParticipants={AVAILABLE_PARTICIPANTS_PLACEHOLDER}
-            isLoading={summary.isLoading}
-            error={summary.error}
+            filteredSummary={filteredSummary.data}
+            availableTotal={availableTotal.data ?? null}
+            isLoading={availableTotal.isLoading || filteredSummary.isLoading}
+            error={availableTotal.error ?? filteredSummary.error}
           />
           <Divider />
           <Demographics
-            summary={summary.data}
-            isLoading={summary.isLoading}
-            error={summary.error}
+            filteredSummary={filteredSummary.data}
+            isLoading={filteredSummary.isLoading}
+            error={filteredSummary.error}
           />
         </Overview>
       </CohortBuilderLayout>

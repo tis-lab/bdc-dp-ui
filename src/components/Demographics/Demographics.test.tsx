@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Demographics from "./Demographics";
+import { SUMMED_TOTALS_NOTE } from "../../utils/summary";
 import {
   t2dFemaleSummary,
   t2dSummary,
@@ -84,6 +85,14 @@ describe("Demographics", () => {
 
     expect(
       screen.getByText("Not reported for this cohort."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the summed totals note with the breakdown", () => {
+    render(<Demographics filteredSummary={t2dSummary} />);
+
+    expect(
+      screen.getByText(SUMMED_TOTALS_NOTE, { exact: false }),
     ).toBeInTheDocument();
   });
 });

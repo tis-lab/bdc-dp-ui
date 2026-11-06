@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import CohortSnapshot from "./CohortSnapshot";
+import { SUMMED_TOTALS_NOTE } from "../../utils/summary";
 import {
   t2dFemaleSummary,
   t2dSummary,
@@ -112,6 +113,19 @@ describe("CohortSnapshot", () => {
         "Participant count is estimated until query is executed",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("shows the summed totals note only with a summary", () => {
+    const { rerender } = render(<CohortSnapshot availableTotal={AVAILABLE} />);
+    expect(screen.queryByText(SUMMED_TOTALS_NOTE)).toBeNull();
+
+    rerender(
+      <CohortSnapshot
+        filteredSummary={t2dSummary}
+        availableTotal={AVAILABLE}
+      />,
+    );
+    expect(screen.getByText(SUMMED_TOTALS_NOTE)).toBeInTheDocument();
   });
 
   it("updates when the summary narrows", () => {

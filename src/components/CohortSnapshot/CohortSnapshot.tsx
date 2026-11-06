@@ -3,7 +3,7 @@ import { Alert, Typography, useTheme } from "@mui/material";
 import ReactECharts from "echarts-for-react";
 import type { SummaryResponse } from "../../api/graphql/queries/cohortSummary";
 import { ECHARTS_FILL } from "../../charts";
-import { cohortParticipants } from "../../utils/summary";
+import { cohortTotals, SUMMED_TOTALS_NOTE } from "../../utils/summary";
 import { MutedSkeleton } from "../LoadingSkeleton";
 import { PanelSection, PanelTitle } from "../Panel/Panel.styles";
 import {
@@ -38,9 +38,8 @@ export default function CohortSnapshot({
   const titleId = useId();
   const theme = useTheme();
 
-  const cohortCount = filteredSummary
-    ? cohortParticipants(filteredSummary)
-    : availableTotal;
+  const totals = filteredSummary && cohortTotals(filteredSummary);
+  const cohortCount = totals ? totals.participants : availableTotal;
 
   const donut = useMemo(() => ({
     series: [
@@ -110,14 +109,19 @@ export default function CohortSnapshot({
           </Donut>
 
           <SnapshotFooter>
-            {filteredSummary && (
+            {totals && (
               <Typography variant="body2">
-                Studies: <strong>{filteredSummary.studies.length}</strong>
+                Studies: <strong>{totals.studies}</strong>
               </Typography>
             )}
             <Typography variant="caption" color="text.secondary">
               Participant count is estimated until query is executed
             </Typography>
+            {totals && (
+              <Typography variant="caption" color="text.secondary">
+                {SUMMED_TOTALS_NOTE}
+              </Typography>
+            )}
           </SnapshotFooter>
         </>
       )}

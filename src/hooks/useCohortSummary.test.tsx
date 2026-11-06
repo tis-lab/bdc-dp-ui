@@ -76,6 +76,32 @@ describe("useCohortSummary", () => {
     });
   });
 
+  it("sends a BDC concept's code", async () => {
+    const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
+
+    const { result } = renderHook(
+      () =>
+        useCohortSummary({
+          include: [
+            {
+              __typename: "BdcConcept",
+              conceptType: "MONDO:0005044",
+              displayLabel: "Hypertension",
+              bdchmType: "condition",
+              studyCount: 10,
+              studies: [],
+            },
+          ],
+          exclude: [],
+          match: "all",
+        }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(sentBody(fetchSpy).variables.include).toEqual(["MONDO:0005044"]);
+  });
+
   it("sends included and excluded concept IDs", async () => {
     const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
 

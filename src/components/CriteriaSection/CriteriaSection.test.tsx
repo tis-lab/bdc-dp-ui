@@ -14,13 +14,12 @@ const hypertension: SearchItem = {
 };
 
 const systolicBp: SearchItem = {
-  __typename: "BdcVariable",
-  name: "bp_systolic",
-  label: "Systolic blood pressure",
-  domain: null,
+  __typename: "BdcConcept",
+  conceptType: "HP:0000822",
+  displayLabel: "Systolic blood pressure",
+  bdchmType: null,
   studyCount: 12,
   studies: [],
-  concepts: [],
 };
 
 describe("CriteriaSection", () => {

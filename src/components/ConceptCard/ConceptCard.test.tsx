@@ -39,7 +39,7 @@ jest.mock("./ConceptCardDetails", () => ({
 /* Fixtures & helpers */
 
 type TermItem = Extract<SearchItem, { __typename: "Term" }>;
-type VariableItem = Extract<SearchItem, { __typename: "BdcVariable" }>;
+type BdcConceptItem = Extract<SearchItem, { __typename: "BdcConcept" }>;
 
 const asthma: TermItem = {
   __typename: "Term",
@@ -60,14 +60,13 @@ const harmonizedAsthma: TermItem = {
   },
 };
 
-const systolicBp: VariableItem = {
-  __typename: "BdcVariable",
-  name: "bp_systolic",
-  label: "Systolic blood pressure",
-  domain: "BLOOD_PRESSURE",
+const systolicBp: BdcConceptItem = {
+  __typename: "BdcConcept",
+  conceptType: "HP:0000822",
+  displayLabel: "Systolic blood pressure",
+  bdchmType: "observation",
   studyCount: 12,
   studies: ["ARIC", "CHS"],
-  concepts: ["HP:0000822"],
 };
 
 type CardProps = Partial<Parameters<typeof ConceptCard>[0]>;
@@ -262,26 +261,24 @@ describe("ConceptCard", () => {
       expect(queryHarmonizedBadge()).toBeInTheDocument();
     });
 
-    it("shows the variable name as its identifier", () => {
+    it("shows the concept code as its identifier", () => {
       renderCard({ concept: systolicBp });
-      expect(screen.getByText(/^bp_systolic\b/)).toBeInTheDocument();
+      expect(screen.getByText(/^HP:0000822\b/)).toBeInTheDocument();
     });
 
     it.each([
-      ["BLOOD_PRESSURE", "Blood Pressure"],
-      ["DEMOGRAPHICS", "Demographics"],
-      ["SLEEP-APNEA", "Sleep Apnea"],
-      ["lung function", "Lung Function"],
-    ])("passes the domain %j as the category %j", async (domain, expected) => {
-      renderCard({ concept: { ...systolicBp, domain } });
+      ["condition", "Condition"],
+      ["drugexposure", "Drug Exposure"],
+    ])("passes the type %j as the category %j", async (bdchmType, expected) => {
+      renderCard({ concept: { ...systolicBp, bdchmType } });
 
       const details = await openDetails();
 
       expect(details).toHaveAttribute("data-category", expected);
     });
 
-    it("passes no category when the domain is null", async () => {
-      renderCard({ concept: { ...systolicBp, domain: null } });
+    it("passes no category when the type is null", async () => {
+      renderCard({ concept: { ...systolicBp, bdchmType: null } });
 
       const details = await openDetails();
 
@@ -356,7 +353,7 @@ describe("ConceptCard", () => {
       renderCard({ concept: systolicBp, compact: true });
 
       expect(screen.getByText("Systolic blood pressure")).toBeInTheDocument();
-      expect(screen.getByText("bp_systolic")).toBeInTheDocument();
+      expect(screen.getByText("HP:0000822")).toBeInTheDocument();
       expect(queryHarmonizedBadge()).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Details" })).toBeNull();
     });

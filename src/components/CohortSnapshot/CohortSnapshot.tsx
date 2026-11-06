@@ -1,5 +1,5 @@
 import { useId, useMemo } from "react";
-import { Alert, Typography, useTheme } from "@mui/material";
+import { Alert, AlertTitle, Typography, useTheme } from "@mui/material";
 import ReactECharts from "echarts-for-react";
 import type { SummaryResponse } from "../../api/graphql/queries/cohortSummary";
 import { ECHARTS_FILL } from "../../charts";
@@ -81,7 +81,10 @@ export default function CohortSnapshot({
       </div>
 
       {error ? (
-        <Alert severity="error">Couldn't load the cohort snapshot.</Alert>
+        <Alert severity="error">
+          <AlertTitle>Couldn't load the cohort snapshot.</AlertTitle>
+          {error.message}
+        </Alert>
       ) : isLoading ? (
         <Donut role="progressbar" aria-label="Loading cohort snapshot">
           <DonutCenter>

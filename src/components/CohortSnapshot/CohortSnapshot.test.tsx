@@ -51,6 +51,23 @@ describe("CohortSnapshot", () => {
     expect(screen.queryByText("5,000")).toBeNull();
   });
 
+  it("shows the error message from the API", () => {
+    render(
+      <CohortSnapshot
+        availableTotal={AVAILABLE}
+        error={
+          new Error(
+            "concept must be a MONDO or HP CURIE, e.g. MONDO:0005015 or HP:0000822.",
+          )
+        }
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "concept must be a MONDO or HP CURIE",
+    );
+  });
+
   it("shows a skeleton ring instead of the counts on the first load", () => {
     render(<CohortSnapshot availableTotal={AVAILABLE} isLoading />);
 

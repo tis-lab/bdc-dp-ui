@@ -55,8 +55,8 @@ interface ExampleData {
   example: { id: string; label: string };
 }
 
-export function useExample(id: string) {
-  return useQuery({
+export const useExample = (id: string) =>
+  useQuery({
     queryKey: ["example", id],
     queryFn: ({ signal }) =>
       graphqlRequest<ExampleData, ExampleVariables>({
@@ -67,7 +67,6 @@ export function useExample(id: string) {
       }),
     enabled: id.length > 0,
   });
-}
 ```
 
 - **`queryKey`** must include every variable, so that changing one fetches again and each

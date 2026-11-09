@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Demographics from "./Demographics";
+import { SUMMED_TOTALS_NOTE } from "../../utils/summary";
 import {
   t2dFemaleSummary,
   t2dSummary,
@@ -29,7 +30,10 @@ describe("Demographics", () => {
 
   it("shows an error, not the counts, when the request fails", () => {
     render(
-      <Demographics summary={t2dSummary} error={new Error("Network down")} />,
+      <Demographics
+        filteredSummary={t2dSummary}
+        error={new Error("Network down")}
+      />,
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent(
@@ -40,7 +44,7 @@ describe("Demographics", () => {
   });
 
   it("is a labelled panel with the cohort size and study count", () => {
-    render(<Demographics summary={t2dSummary} />);
+    render(<Demographics filteredSummary={t2dSummary} />);
 
     expect(
       screen.getByRole("region", { name: "Demographics" }),
@@ -51,7 +55,7 @@ describe("Demographics", () => {
   });
 
   it("shows sex by default", () => {
-    render(<Demographics summary={t2dSummary} />);
+    render(<Demographics filteredSummary={t2dSummary} />);
 
     expect(screen.getByRole("tab", { name: "Sex" })).toHaveAttribute(
       "aria-selected",
@@ -64,7 +68,7 @@ describe("Demographics", () => {
 
   it("switches to race and ethnicity", async () => {
     const user = userEvent.setup();
-    render(<Demographics summary={t2dSummary} />);
+    render(<Demographics filteredSummary={t2dSummary} />);
 
     await user.click(screen.getByRole("tab", { name: "Race" }));
     expect(screen.getByText("White: 510")).toBeInTheDocument();
@@ -75,12 +79,20 @@ describe("Demographics", () => {
 
   it("says so when the cohort has no data for a breakdown", async () => {
     const user = userEvent.setup();
-    render(<Demographics summary={t2dFemaleSummary} />);
+    render(<Demographics filteredSummary={t2dFemaleSummary} />);
 
     await user.click(screen.getByRole("tab", { name: "Ethnicity" }));
 
     expect(
       screen.getByText("Not reported for this cohort."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the summed totals note with the breakdown", () => {
+    render(<Demographics filteredSummary={t2dSummary} />);
+
+    expect(
+      screen.getByText(SUMMED_TOTALS_NOTE, { exact: false }),
     ).toBeInTheDocument();
   });
 });

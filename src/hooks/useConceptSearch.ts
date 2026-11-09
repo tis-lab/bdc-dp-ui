@@ -12,14 +12,11 @@ interface ConceptSearchOptions {
   offset?: number;
 }
 
-/**
- * Resolves `searchText` to BDC concepts. Runs only when the text is non-empty;
- * the caller controls when `searchText` changes.
- */
-export function useConceptSearch(
+/** Resolves `searchText` to BDC concepts; disabled for empty text. */
+export const useConceptSearch = (
   searchText: string,
   { limit = 20, offset = 0 }: ConceptSearchOptions = {},
-) {
+) => {
   const query = searchText.trim();
 
   return useQuery({
@@ -40,9 +37,8 @@ export function useConceptSearch(
       return data.terms;
     },
     enabled: query.length > 0,
-    // Keep the current page on screen while the next one loads, so the layout
-    // doesn't collapse; a new search text still starts from empty.
+    // Keep the previous page while paging; reset for new search text
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[1] === query ? previous : undefined,
   });
-}
+};

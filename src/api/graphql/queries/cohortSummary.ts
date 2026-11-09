@@ -1,4 +1,4 @@
-// Subset of schema/summary.yaml.
+// Subset of the middleware's summary response.
 
 export interface DemographyValue {
   id: string;
@@ -26,8 +26,8 @@ export interface SummaryResponse {
 }
 
 export const COHORT_SUMMARY_QUERY = `
-  query ReadSummary($sourceId: ID!, $include: [ID!]!, $exclude: [ID!]!) {
-    summary(sourceId: $sourceId, include: $include, exclude: $exclude) {
+  query GetSummary($filter: SummaryFilterInput) {
+    summary(filter: $filter) {
       studies {
         research_study
         participant_count
@@ -42,10 +42,17 @@ export const COHORT_SUMMARY_QUERY = `
   }
 `;
 
+type ConditionSelection = "INCLUDE" | "EXCLUDE";
+
+/** One field per node; nesting defines grouping. Groups must be non-empty. */
+export type SummaryFilter =
+  | { condition: { concept: string; selection: ConditionSelection } }
+  | { and: SummaryFilter[] }
+  | { or: SummaryFilter[] };
+
 export interface CohortSummaryVariables {
-  sourceId: string;
-  include: string[];
-  exclude: string[];
+  /** null returns the unfiltered summary. */
+  filter: SummaryFilter | null;
 }
 
 export interface CohortSummaryData {

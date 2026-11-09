@@ -4,10 +4,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CohortBuilder from "./CohortBuilder";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
-import { AVAILABLE_PARTICIPANTS_PLACEHOLDER } from "../placeholders";
+import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
 
 const ORIGINAL_ENV = process.env;
-const AVAILABLE = AVAILABLE_PARTICIPANTS_PLACEHOLDER.toLocaleString();
+const AVAILABLE = "2,000";
+
+const studiesOf = (...counts: number[]): SummaryResponse => ({
+  studies: counts.map((participant_count, i) => ({
+    research_study: `study_${i}`,
+    participant_count,
+  })),
+});
+
+/** A fixed cohort per filter shape: AND, OR, or a single condition. */
+const summaryFor = (filter: Record<string, unknown>) =>
+  "and" in filter
+    ? studiesOf(250, 200)
+    : "or" in filter
+      ? studiesOf(600, 600)
+      : t2dSummary;
+
+const pageLoadSnapshot = {
+  participantCount: { value: 2000, suppressed: false },
+};
 
 const mockHypertension: SearchItem = {
   __typename: "Term",
@@ -55,20 +74,26 @@ beforeEach(() => {
     ...ORIGINAL_ENV,
     VITE_GRAPHQL_URL: "https://graphql.test/graphql",
   };
-  jest.spyOn(globalThis, "fetch").mockImplementation(
-    async () =>
-      new Response(JSON.stringify({ data: { summary: t2dSummary } }), {
-        status: 200,
-      }),
-  );
+  jest.spyOn(globalThis, "fetch").mockImplementation(async (_, init) => {
+    const { query, variables } = JSON.parse(init?.body as string);
+    const data = query.includes("pageLoadSnapshot")
+      ? { pageLoadSnapshot }
+      : { summary: summaryFor(variables.filter) };
+    return new Response(JSON.stringify({ data }), { status: 200 });
+  });
 });
+
+const sentBodies = () =>
+  jest
+    .mocked(globalThis.fetch)
+    .mock.calls.map(([, init]) => JSON.parse(init?.body as string));
 
 afterEach(() => {
   process.env = ORIGINAL_ENV;
   jest.restoreAllMocks();
 });
 
-function renderBuilder() {
+const renderBuilder = () => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -77,7 +102,7 @@ function renderBuilder() {
       <CohortBuilder />
     </QueryClientProvider>,
   );
-}
+};
 
 const querySection = (name: "Include" | "Exclude") =>
   screen.queryByRole("region", { name });
@@ -162,14 +187,26 @@ describe("CohortBuilder", () => {
   });
 
   describe("cohort overview", () => {
-    it("shows everyone available, without asking the API, before anything is added", () => {
+    it("asks only for the page load snapshot on page load, and shows its total", async () => {
       renderBuilder();
 
-      expect(screen.getByText(AVAILABLE)).toBeInTheDocument();
+      expect(await screen.findByText(AVAILABLE)).toBeInTheDocument();
       expect(
         screen.getByText("Include a concept to see its demographic breakdown."),
       ).toBeInTheDocument();
-      expect(globalThis.fetch).not.toHaveBeenCalled();
+      expect(sentBodies()).toHaveLength(1);
+      expect(sentBodies()[0].query).toContain("pageLoadSnapshot");
+    });
+
+    it("shows an error instead of the counts when the page load request fails", async () => {
+      jest
+        .mocked(globalThis.fetch)
+        .mockImplementation(async () => new Response("", { status: 500 }));
+      renderBuilder();
+
+      expect(
+        await screen.findByText("Couldn't load the cohort snapshot."),
+      ).toBeInTheDocument();
     });
 
     it("shows the API's summary once a concept is included", async () => {
@@ -178,19 +215,26 @@ describe("CohortBuilder", () => {
 
       await user.click(screen.getByRole("button", { name: "include result" }));
 
-      // 940 from the API, plus the placeholder's 50 for one include
-      expect(await screen.findByText("990")).toBeInTheDocument();
+      // Sum of study counts: 480 + 460
+      expect(await screen.findByText("940")).toBeInTheDocument();
       expect(screen.getByText(`of ${AVAILABLE} available`)).toBeInTheDocument();
       expect(
-        screen.getByText("990 participants · 2 studies"),
+        screen.getByText("940 participants · 2 studies"),
       ).toBeInTheDocument();
-      const body = JSON.parse(
-        jest.mocked(globalThis.fetch).mock.calls[0][1]?.body as string,
-      );
-      expect(body.variables).toEqual({
-        sourceId: "t2d",
-        include: ["HP:0000822"],
-        exclude: [],
+      expect(sentBodies().at(-1).variables).toEqual({
+        filter: { condition: { concept: "HP:0000822", selection: "INCLUDE" } },
+      });
+    });
+
+    it("sends an exclude as an EXCLUDE condition", async () => {
+      const user = userEvent.setup();
+      renderBuilder();
+
+      await user.click(screen.getByRole("button", { name: "exclude result" }));
+
+      expect(await screen.findByText("940")).toBeInTheDocument();
+      expect(sentBodies().at(-1).variables).toEqual({
+        filter: { condition: { concept: "HP:0000822", selection: "EXCLUDE" } },
       });
     });
 
@@ -199,7 +243,7 @@ describe("CohortBuilder", () => {
       renderBuilder();
 
       await user.click(screen.getByRole("button", { name: "include result" }));
-      await screen.findByText("990");
+      await screen.findByText("940");
       expect(
         screen.queryByRole("group", { name: "Inclusion logic" }),
       ).toBeNull();
@@ -211,11 +255,12 @@ describe("CohortBuilder", () => {
       expect(
         within(match).getByRole("button", { name: "All" }),
       ).toHaveAttribute("aria-pressed", "true");
-      // Placeholder counts: 940 from the API, narrowed by AND, widened by OR
-      expect(await screen.findByText("940")).toBeInTheDocument();
+      expect(await screen.findByText("450")).toBeInTheDocument();
+      expect(sentBodies().at(-1).variables.filter).toHaveProperty("and");
 
       await user.click(within(match).getByRole("button", { name: "Any" }));
-      expect(await screen.findByText("1,040")).toBeInTheDocument();
+      expect(await screen.findByText("1,200")).toBeInTheDocument();
+      expect(sentBodies().at(-1).variables.filter).toHaveProperty("or");
     });
 
     it("goes back to everyone available once every criterion is removed", async () => {
@@ -223,7 +268,7 @@ describe("CohortBuilder", () => {
       renderBuilder();
 
       await user.click(screen.getByRole("button", { name: "include result" }));
-      await screen.findByText("990");
+      await screen.findByText("940");
       await user.click(screen.getByRole("button", { name: "Remove" }));
 
       expect(await screen.findByText(AVAILABLE)).toBeInTheDocument();

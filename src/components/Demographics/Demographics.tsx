@@ -4,9 +4,10 @@ import ReactECharts from "echarts-for-react";
 import type { SummaryResponse } from "../../api/graphql/queries/cohortSummary";
 import { ECHARTS_FILL } from "../../charts";
 import {
-  cohortParticipants,
-  demographicBreakdown,
+  cohortTotals,
   percentOf,
+  SUMMED_TOTALS_NOTE,
+  type CohortTotals,
   type DemographicSlot,
 } from "../../utils/summary";
 import EmptyState from "../EmptyState";
@@ -23,10 +24,10 @@ const SLOTS: { slot: DemographicSlot; label: string }[] = [
 ];
 
 export interface Props {
-  summary?: SummaryResponse;
-  /** First load only; later updates keep the current chart on screen. */
+  /** Summary for the current criteria; absent shows the empty state. */
+  filteredSummary?: SummaryResponse;
+  /** First load only. */
   isLoading?: boolean;
-  /** Shown instead of the chart, so a failed request never reads as "add criteria". */
   error?: Error | null;
 }
 
@@ -36,28 +37,32 @@ const SKELETON_BARS = 3;
 // ----------------------------------------------------------------------
 
 export default function Demographics({
-  summary,
+  filteredSummary,
   isLoading = false,
   error = null,
 }: Props) {
   const titleId = useId();
+  const totals = useMemo(
+    () => filteredSummary && cohortTotals(filteredSummary),
+    [filteredSummary],
+  );
 
   return (
     <PanelSection aria-labelledby={titleId} aria-busy={isLoading}>
       <div>
         <PanelTitle id={titleId}>Demographics</PanelTitle>
-        {summary && !error && (
+        {totals && !error && (
           <Typography variant="body2" color="text.secondary">
-            {cohortParticipants(summary).toLocaleString()} participants ·{" "}
-            {summary.studies.length} studies
+            {totals.participants.toLocaleString()} participants ·{" "}
+            {totals.studies} studies
           </Typography>
         )}
       </div>
 
       {error ? (
         <Alert severity="error">Couldn't load demographics.</Alert>
-      ) : summary ? (
-        <Breakdown summary={summary} />
+      ) : totals ? (
+        <Breakdown totals={totals} />
       ) : isLoading ? (
         <BarArea rows={SKELETON_BARS}>
           <SkeletonRows
@@ -73,15 +78,12 @@ export default function Demographics({
   );
 }
 
-function Breakdown({ summary }: { summary: SummaryResponse }) {
+const Breakdown = ({ totals }: { totals: CohortTotals }) => {
   const theme = useTheme();
   const [slot, setSlot] = useState<DemographicSlot>("sex");
 
-  const total = cohortParticipants(summary);
-  const rows = useMemo(
-    () => demographicBreakdown(summary, slot),
-    [summary, slot],
-  );
+  const total = totals.participants;
+  const rows = totals.demographics[slot];
 
   const bars = useMemo(
     () => ({
@@ -150,9 +152,9 @@ function Breakdown({ summary }: { summary: SummaryResponse }) {
       )}
 
       <Typography variant="caption" color="text.secondary">
-        Counts are aggregated across studies. Categories may not total 100% when
-        values are not reported.
+        {SUMMED_TOTALS_NOTE} Categories may not total 100% when values are not
+        reported.
       </Typography>
     </>
   );
-}
+};

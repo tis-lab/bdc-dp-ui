@@ -16,11 +16,24 @@ cd bdc-data-portal-cohort-builder
 npm install
 ```
 
+## Deployment
+
+The standalone app is hosted on UNC Cloudapps Openshift environment (see link in About).
+
+**Rebuilding the app:**
+
+- Rebuilds are self-service.
+- In the Cloudapps web console, open **Topology → `<pod>`** and click **Start Build**
+
+The build pulls from the `main` branch. Once it succeeds, the new version rolls out automatically.
+
 ## Scripts
 
 | Command             | What it does                                                 |
-| ------------------- | ------------------------------------------------------------ | --- |
+| ------------------- | ------------------------------------------------------------ |
 | `npm run dev`       | Starts the standalone app on the Vite dev server (port 3000) |
-| `npm run build`     | Builds the standalone app into `dist/`                       |
+| `npm run test`      | Runs unit tests and coverage report                          |
+| `npm run build`     | Builds both the standalone app and the library               |
+| `npm run build:app` | Builds the standalone app into `dist/`                       |
+| `npm run build:lib` | Builds the library into `lib/`                               |
 | `npm start`         | Serves the built standalone app on port 8080                 |
-| `npm run build:lib` | Builds the library into `lib/`                               |     |

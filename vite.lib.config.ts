@@ -20,16 +20,14 @@ export default defineConfig({
       fileName: (format) => (format === "es" ? "index.js" : "index.cjs"),
     },
     rollupOptions: {
+      // Peer dependencies and their subpaths, e.g. @mui/icons-material/Close
       external: [
-        "react",
-        "react/jsx-runtime",
-        "react-dom",
-        "@emotion/react",
-        "@emotion/styled",
-        "@mui/icons-material",
-        "@mui/material",
-        "echarts",
-        "echarts-for-react",
+        /^react($|\/)/,
+        /^react-dom($|\/)/,
+        /^@emotion\//,
+        /^@mui\//,
+        /^echarts($|\/)/,
+        /^echarts-for-react($|\/)/,
       ],
     },
     sourcemap: true,

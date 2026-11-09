@@ -10,6 +10,16 @@ interface GraphQLResponse<TData> {
   errors?: { message: string }[];
 }
 
+export class HttpError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`GraphQL request failed: HTTP ${status}`);
+    this.name = "HttpError";
+    this.status = status;
+  }
+}
+
 /** POSTs one GraphQL operation to `endpoint` and returns its `data`. */
 export const graphqlRequest = async <TData, TVariables extends object>({
   endpoint,
@@ -24,7 +34,7 @@ export const graphqlRequest = async <TData, TVariables extends object>({
     signal,
   });
   if (!response.ok) {
-    throw new Error(`GraphQL request failed: HTTP ${response.status}`);
+    throw new HttpError(response.status);
   }
 
   const body = (await response.json()) as GraphQLResponse<TData>;

@@ -1,8 +1,8 @@
 import { useId, useMemo, useState } from "react";
 import { Alert, Tab, Tabs, Typography, useTheme } from "@mui/material";
-import ReactECharts from "echarts-for-react";
+import ReactEChartsCore from "echarts-for-react/lib/core";
 import type { SummaryResponse } from "../../api/graphql/queries/cohortSummary";
-import { ECHARTS_FILL } from "../../charts";
+import { ECHARTS_FILL, echarts } from "../../charts";
 import {
   cohortTotals,
   percentOf,
@@ -143,7 +143,11 @@ const Breakdown = ({ totals }: { totals: CohortTotals }) => {
 
       {rows.length > 0 ? (
         <BarArea rows={rows.length}>
-          <ReactECharts option={bars} style={ECHARTS_FILL} />
+          <ReactEChartsCore
+            echarts={echarts}
+            option={bars}
+            style={ECHARTS_FILL}
+          />
         </BarArea>
       ) : (
         <Typography variant="body2" color="text.secondary">

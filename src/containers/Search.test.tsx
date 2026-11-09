@@ -149,7 +149,7 @@ function mockSuggestions(state: Partial<SuggestionState>) {
 /* Fixtures & helpers */
 
 type TermItem = Extract<SearchItem, { __typename: "Term" }>;
-type VariableItem = Extract<SearchItem, { __typename: "BdcVariable" }>;
+type BdcConceptItem = Extract<SearchItem, { __typename: "BdcConcept" }>;
 
 const makeTerm = (id: string, label: string): TermItem => ({
   __typename: "Term",
@@ -167,14 +167,16 @@ const makeTerms = (count: number) =>
     makeTerm(`C${String(i + 1).padStart(7, "0")}`, `Concept ${i + 1}`),
   );
 
-const makeVariable = (name: string, label: string): VariableItem => ({
-  __typename: "BdcVariable",
-  name,
-  label,
-  domain: "BLOOD_PRESSURE",
+const makeBdcConcept = (
+  conceptType: string,
+  displayLabel: string,
+): BdcConceptItem => ({
+  __typename: "BdcConcept",
+  conceptType,
+  displayLabel,
+  bdchmType: "observation",
   studyCount: 2,
   studies: ["ARIC", "CHS"],
-  concepts: ["HP:0000822"],
 });
 
 /** A single-page response containing `items`. */
@@ -204,7 +206,7 @@ const suggestionsOf = (terms: TermItem[]): SuggestionsPage => ({
 });
 
 const asthma = makeTerm("C0004096", "Asthma");
-const systolicBp = makeVariable("bp_systolic", "Systolic blood pressure");
+const systolicBp = makeBdcConcept("HP:0000822", "Systolic blood pressure");
 const childhoodAsthma = makeTerm("C0264408", "Childhood asthma");
 
 // MUI's Autocomplete gives the input role="combobox"
@@ -855,7 +857,10 @@ describe("Search", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
       mockSearch({
-        data: resultsOf([makeVariable("C0004096", "Asthma variable"), asthma]),
+        data: resultsOf([
+          makeBdcConcept("C0004096", "Asthma variable"),
+          asthma,
+        ]),
       });
       render(<Search />);
 

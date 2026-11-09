@@ -21,7 +21,7 @@ export interface Criteria {
 }
 
 const conceptOf = (item: SearchItem) =>
-  item.__typename === "Term" ? item.id : item.name;
+  item.__typename === "Term" ? item.id : item.conceptType;
 
 /** Runs only once a concept is included or excluded. */
 export function useCohortSummary(criteria: Criteria) {

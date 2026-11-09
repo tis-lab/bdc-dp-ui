@@ -20,14 +20,13 @@ import {
   ExpandIcon,
 } from "./ConceptCard.styles";
 
-function formatDomain(domain: string): string {
-  return domain
-    .toLowerCase()
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .map((word) => word[0].toUpperCase() + word.slice(1))
-    .join(" ");
-}
+const BDCHM_TYPE_LABELS: Record<string, string> = {
+  condition: "Condition",
+  observation: "Observation",
+  drugexposure: "Drug Exposure",
+  procedure: "Procedure",
+  exposure: "Exposure",
+};
 
 // ----------------------------------------------------------------------
 
@@ -60,11 +59,11 @@ interface CardView {
 }
 
 function toCardView(item: SearchItem): CardView {
-  if (item.__typename === "BdcVariable") {
+  if (item.__typename === "BdcConcept") {
     return {
-      id: item.name,
-      label: item.label,
-      category: item.domain ? formatDomain(item.domain) : null,
+      id: item.conceptType,
+      label: item.displayLabel,
+      category: item.bdchmType && BDCHM_TYPE_LABELS[item.bdchmType],
       description: null,
       isHarmonizedVariable: true,
       variableNames: [],

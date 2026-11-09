@@ -13,13 +13,12 @@ const ORIGINAL_ENV = process.env;
 const termsPage: TermsPage = {
   items: [
     {
-      __typename: "BdcVariable",
-      name: "diabetes",
-      label: "Diabetes",
-      domain: null,
+      __typename: "BdcConcept",
+      conceptType: "MONDO:0005148",
+      displayLabel: "Diabetes",
+      bdchmType: null,
       studyCount: 2,
       studies: ["example_study_one", "example_study_two"],
-      concepts: ["MONDO:0005148"],
     },
     {
       __typename: "Term",
@@ -48,7 +47,7 @@ const termsPage: TermsPage = {
   limit: 20,
   offset: 0,
   hasMore: false,
-  bdcVariableCount: 1,
+  bdcConceptCount: 1,
 };
 
 function createWrapper() {

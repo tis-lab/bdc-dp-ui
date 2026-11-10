@@ -44,20 +44,7 @@ const theme = createTheme({
     caption: { ...styling.typography.caption },
     eyebrow: { ...styling.typography.eyebrow },
   },
-  components: {
-    appBar: {
-      position: "static",
-      color: "default",
-      elevation: 1,
-      sx: {
-        backgroundColor: styling.primaryPalette.white.value,
-        borderBottom: `1px solid ${styling.secondaryPalette.lightGray.value}`,
-        boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
-      },
-    },
-    toolbar: {
-      sx: { justifyContent: "space-between" },
-    },
+  layout: {
     footer: {
       primary: {
         color: "#dfe1e2",
@@ -83,7 +70,27 @@ const theme = createTheme({
           "radial-gradient(circle at 8% 14%, rgba(0, 94, 162, .2) 0%, transparent 36%), radial-gradient(circle at 90% 18%, rgba(0, 129, 161, .16) 0%, transparent 34%), linear-gradient(180deg, #0081a10f, #fffdf9 52%, #005ea214)",
       },
     },
-
+  },
+  components: {
+    MuiAppBar: {
+      defaultProps: {
+        position: "static",
+        color: "default",
+        elevation: 1,
+      },
+      styleOverrides: {
+        root: {
+          backgroundColor: styling.primaryPalette.white.value,
+          borderBottom: `1px solid ${styling.secondaryPalette.lightGray.value}`,
+          boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
+        },
+      },
+    },
+    MuiToolbar: {
+      styleOverrides: {
+        root: { justifyContent: "space-between" },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {

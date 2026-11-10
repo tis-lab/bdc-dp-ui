@@ -2,6 +2,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import { queryClient } from "./api/queryClient";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { ThemeProvider } from "@mui/material";
+import theme from "./theme/MuiTheme";
 
 /**
  * The root of Study Palette: app-wide providers around <App />. Both the standalone
@@ -10,10 +12,12 @@ import ErrorBoundary from "./components/ErrorBoundary";
  */
 export default function Root() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <ThemeProvider theme={theme}>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }

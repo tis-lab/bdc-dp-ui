@@ -32,7 +32,7 @@ export default function Landing() {
         </Container>
       </Hero>
       <MainSection>
-        <Typography variant="h2" gutterBottom>
+        <Typography variant="h2" component="h1" gutterBottom>
           Start Building a Cohort
         </Typography>
         <Typography variant="body2">

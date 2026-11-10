@@ -46,7 +46,7 @@ const mockDiabetes: SearchItem = {
 
 // Search has its own tests; this stub only reports clicks.
 // jest.mock factories may only use outside variables named mock*.
-jest.mock("./Search", () => ({
+jest.mock("./SearchConcept", () => ({
   __esModule: true,
   default: ({
     onInclude,

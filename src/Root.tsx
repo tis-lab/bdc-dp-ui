@@ -4,9 +4,10 @@ import { queryClient } from "./api/queryClient";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 /**
- * The root of Study Palette: app-wide providers around <App />. Both the standalone
- * app (main.tsx) and the published package (index.ts) render this, so a host
- * application does not have to supply any of these providers.
+ * App-wide providers around <App />. The host must supply:
+ *  - a React Router v7 router, with this application mounted under a splat route
+ *    (e.g. path="/cohort-builder/*")
+ *  - an MUI ThemeProvider
  */
 export default function Root() {
   return (

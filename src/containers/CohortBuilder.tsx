@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Container, Divider } from "@mui/material";
-import Search from "./Search";
+import Search from "./SearchConcept";
 import CohortCriteria from "../components/CohortCriteria";
 import CohortSnapshot from "../components/CohortSnapshot";
 import Demographics from "../components/Demographics";

@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Search from "./Search";
+import Search from "./SearchConcept";
 import { useConceptSearch } from "../hooks/useConceptSearch";
 import { useConceptSuggestions } from "../hooks/useConceptSuggestions";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";

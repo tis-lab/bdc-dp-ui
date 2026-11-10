@@ -8,7 +8,12 @@ import { useConceptSearch } from "../hooks/useConceptSearch";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { uniqueLabels } from "../utils/uniqueLabels";
 import { useConceptSuggestions } from "../hooks/useConceptSuggestions";
-import { ResultList, Results, SearchButton, SearchRow } from "./Search.styles";
+import {
+  ResultList,
+  Results,
+  SearchButton,
+  SearchRow,
+} from "./SearchConcept.styles";
 import {
   getSearchItemKey,
   type SearchItem,

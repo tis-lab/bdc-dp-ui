@@ -1,11 +1,26 @@
 import { Box, Button, Container, Grid, Typography } from "@mui/material";
+import { createSearchParams, useNavigate } from "react-router";
 import { GridContainer, Hero, HeroText, MainSection } from "./Landing.styles";
 import { Panel, PanelTitle } from "../components/Panel/Panel.styles";
+import ConceptSearchbar from "../components/ConceptSearchbar";
 import { useId } from "react";
+
+const BUILD_PATH = "/build";
 
 export default function Landing() {
   const searchSectionId = useId();
   const definitionSectionId = useId();
+  const navigate = useNavigate();
+
+  // Results live in the cohort builder, hand the query over through the URL
+  const handleSearch = (text: string) => {
+    const q = text.trim();
+    navigate({
+      pathname: BUILD_PATH,
+      search: q ? `?${createSearchParams({ q })}` : "",
+    });
+  };
+
   return (
     <Box>
       <Hero>
@@ -32,7 +47,7 @@ export default function Landing() {
         </Container>
       </Hero>
       <MainSection>
-        <Typography variant="h2" component="h1" gutterBottom>
+        <Typography variant="h2" gutterBottom>
           Start Building a Cohort
         </Typography>
         <Typography variant="body2">
@@ -42,9 +57,14 @@ export default function Landing() {
           <Grid size={{ xs: 5, md: 3 }}>
             <Panel as="section" aria-labelledby={searchSectionId}>
               <PanelTitle id={searchSectionId}>Search Concepts</PanelTitle>
-              <Typography variant="body2">
+              <Typography variant="body2" gutterBottom>
                 Find variables across BDC studies by keyword or ontology term
               </Typography>
+              <ConceptSearchbar
+                onSearch={handleSearch}
+                placeholder="e.g. blood pressure, diabetes, BMI…"
+                showExamples
+              />
             </Panel>
           </Grid>
           <Grid size={{ xs: 5, md: 2 }}>
@@ -53,7 +73,7 @@ export default function Landing() {
                 Existing Cohort Definitions
               </PanelTitle>
               <Typography variant="body2">
-                Start from a curated community definiton
+                Start from a curated community definition
               </Typography>
             </Panel>
           </Grid>

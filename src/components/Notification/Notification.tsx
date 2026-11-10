@@ -1,4 +1,4 @@
-import { Alert, AlertColor, Snackbar } from "@mui/material";
+import { Alert, AlertColor, Portal, Snackbar } from "@mui/material";
 
 export interface Props {
   open: boolean;
@@ -14,18 +14,20 @@ export default function Notification({
   severity,
 }: Props) {
   return (
-    <Snackbar
-      anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      open={open}
-      onClose={(_, reason) => {
-        if (reason === "clickaway") return;
-        onClose?.();
-      }}
-      autoHideDuration={5000}
-    >
-      <Alert onClose={onClose} severity={severity}>
-        {message}
-      </Alert>
-    </Snackbar>
+    <Portal>
+      <Snackbar
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        open={open}
+        onClose={(_, reason) => {
+          if (reason === "clickaway") return;
+          onClose?.();
+        }}
+        autoHideDuration={5000}
+      >
+        <Alert onClose={onClose} severity={severity}>
+          {message}
+        </Alert>
+      </Snackbar>
+    </Portal>
   );
 }

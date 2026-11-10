@@ -27,6 +27,10 @@ The standalone app is hosted on UNC Cloudapps Openshift environment (see link in
 
 The build pulls from the `main` branch. Once it succeeds, the new version rolls out automatically.
 
+## Migration
+
+Please refer to MIGRATE.md
+
 ## Scripts
 
 | Command             | What it does                                                 |

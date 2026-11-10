@@ -49,14 +49,14 @@ describe("App", () => {
     expect(screen.queryByTestId("landing")).not.toBeInTheDocument();
   });
 
-  describe("when mounted by the host at /cohortbuilder/*", () => {
-    it("renders the landing page at /cohortbuilder", () => {
+  describe("when mounted by the host at /cohort-builder/*", () => {
+    it("renders the landing page at /cohort-builder", () => {
       renderInHostAt("/cohort-builder");
 
       expect(screen.getByTestId("landing")).toBeInTheDocument();
     });
 
-    it("renders the cohort builder at /cohortbuilder/build", () => {
+    it("renders the cohort builder at /cohort-builder/build", () => {
       renderInHostAt("/cohort-builder/build");
 
       expect(screen.getByTestId("cohort-builder")).toBeInTheDocument();

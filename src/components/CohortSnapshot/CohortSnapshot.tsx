@@ -40,31 +40,34 @@ export default function CohortSnapshot({
   const totals = filteredSummary && cohortTotals(filteredSummary);
   const cohortCount = totals ? totals.participants : availableTotal;
 
-  const donut = useMemo(() => ({
-    series: [
-      {
-        type: "pie",
-        radius: ["82%", "100%"],
-        startAngle: 90,
-        stillShowZeroSum: false,
-        silent: true,
-        animation: false,
-        label: { show: false },
-        data: [
-          {
-            name: "In cohort",
-            value: availableTotal === null ? 0 : (cohortCount ?? 0),
-            itemStyle: { color: theme.palette.primary.main },
-          },
-          {
-            name: "Not in cohort",
-            value: Math.max((availableTotal ?? 0) - (cohortCount ?? 0), 0),
-            itemStyle: { color: theme.palette.grey[300] },
-          },
-        ],
-      },
-    ],
-  }), [cohortCount, availableTotal, theme]);
+  const donut = useMemo(
+    () => ({
+      series: [
+        {
+          type: "pie",
+          radius: ["82%", "100%"],
+          startAngle: 90,
+          stillShowZeroSum: false,
+          silent: true,
+          animation: false,
+          label: { show: false },
+          data: [
+            {
+              name: "In cohort",
+              value: availableTotal === null ? 0 : (cohortCount ?? 0),
+              itemStyle: { color: theme.palette.primary.main },
+            },
+            {
+              name: "Not in cohort",
+              value: Math.max((availableTotal ?? 0) - (cohortCount ?? 0), 0),
+              itemStyle: { color: theme.palette.grey[300] },
+            },
+          ],
+        },
+      ],
+    }),
+    [cohortCount, availableTotal, theme],
+  );
 
   return (
     <PanelSection aria-labelledby={titleId} aria-busy={isLoading}>
@@ -106,11 +109,13 @@ export default function CohortSnapshot({
                   Not available
                 </Typography>
               ) : (
-                <Typography variant="h5" component="p">
+                <Typography variant="h4" component="p">
                   {cohortCount.toLocaleString()}
                 </Typography>
               )}
-              <DonutCaption variant="caption">Estimated Participants</DonutCaption>
+              <DonutCaption variant="caption">
+                Estimated Participants
+              </DonutCaption>
               {filteredSummary && availableTotal !== null && (
                 <DonutCaption variant="caption" color="text.secondary">
                   of {availableTotal.toLocaleString()} available

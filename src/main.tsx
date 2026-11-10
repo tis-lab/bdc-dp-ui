@@ -10,6 +10,13 @@ import theme from "./theme/MuiTheme";
  * import { muiTheme as theme } from "@nhlbi/bdcp-frontend"
  */
 
+import "@fontsource/public-sans/400.css";
+import "@fontsource/public-sans/600.css";
+import "@fontsource/public-sans/700.css";
+import "@fontsource/merriweather/400.css";
+import "@fontsource/merriweather/600.css";
+import "@fontsource/merriweather/700.css";
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>

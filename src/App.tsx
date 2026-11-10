@@ -1,10 +1,12 @@
-import { Container } from "@mui/material";
 import CohortBuilder from "./containers/CohortBuilder";
+import { Route, Routes } from "react-router";
+import Landing from "./containers/Landing";
 
 export default function App() {
   return (
-    <Container maxWidth="lg">
-      <CohortBuilder />
-    </Container>
+    <Routes>
+      <Route index element={<Landing />} />
+      <Route path="build" element={<CohortBuilder />} />
+    </Routes>
   );
 }

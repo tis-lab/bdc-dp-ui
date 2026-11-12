@@ -1,29 +1,37 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  render as rtlRender,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Search from "./Search";
-import { useConceptSearch } from "../hooks/useConceptSearch";
-import { useConceptSuggestions } from "../hooks/useConceptSuggestions";
-import type { SearchItem } from "../api/graphql/queries/resolveTerms";
+import type { ReactElement } from "react";
+import { MemoryRouter, useLocation, useNavigate } from "react-router";
+import ConceptSearch from "./ConceptSearch";
+import { useConceptSearch } from "../../hooks/useConceptSearch";
+import { useConceptSuggestions } from "../../hooks/useConceptSuggestions";
+import type { SearchItem } from "../../api/graphql/queries/resolveTerms";
 import type {
   Suggestion,
   SuggestionsPage,
-} from "../api/graphql/queries/autocomplete";
+} from "../../api/graphql/queries/autocomplete";
 
 // ----------------------------------------------------------------------
 
 /* Mocks */
 
-jest.mock("../hooks/useConceptSearch", () => ({
+jest.mock("../../hooks/useConceptSearch", () => ({
   useConceptSearch: jest.fn(),
 }));
 
-jest.mock("../hooks/useConceptSuggestions", () => ({
+jest.mock("../../hooks/useConceptSuggestions", () => ({
   useConceptSuggestions: jest.fn(),
 }));
 
-// Stub so these tests don't depend on Notification's internals.
-// The dismiss button lets tests exercise onClose.
-jest.mock("../components/Notification/Notification", () => ({
+// Stub so these tests don't depend on Notification's internals (it also
+// replaces the one inside ConceptSearchbar). The dismiss button lets tests
+// exercise onClose.
+jest.mock("../Notification/Notification", () => ({
   __esModule: true,
   default: ({
     open,
@@ -143,6 +151,41 @@ function mockPagedSearch(all: SearchItem[]) {
 function mockSuggestions(state: Partial<SuggestionState>) {
   respondToSuggestions = (text) => (text ? { ...idle, ...state } : idle);
 }
+
+// ----------------------------------------------------------------------
+
+/* Router */
+
+/**
+ * Shows the current URL and offers a Back button, so tests can check what
+ * ConceptSearch writes to the URL and how it follows history.
+ * A test id, not role="status", so it can't be mistaken for the summary.
+ */
+function LocationProbe() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (
+    <>
+      <div data-testid="location">{location.pathname + location.search}</div>
+      <button type="button" onClick={() => navigate(-1)}>
+        History back
+      </button>
+    </>
+  );
+}
+
+/** ConceptSearch keeps its query and page in the URL, so it needs a router. */
+const render = (ui: ReactElement, url = "/build") =>
+  rtlRender(
+    <MemoryRouter initialEntries={[url]}>
+      {ui}
+      <LocationProbe />
+    </MemoryRouter>,
+  );
+
+const currentUrl = () => screen.getByTestId("location").textContent;
+const goBack = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole("button", { name: "History back" }));
 
 // ----------------------------------------------------------------------
 
@@ -270,16 +313,16 @@ beforeEach(() => {
 
 // ----------------------------------------------------------------------
 
-describe("Search", () => {
+describe("ConceptSearch", () => {
   describe("initial state", () => {
     it("renders the search box and Search button", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       expect(getInput()).toBeInTheDocument();
       expect(getSearchButton()).toBeInTheDocument();
     });
 
     it("prompts with a placeholder and example searches before anything is submitted", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       expect(getInput()).toHaveAttribute("placeholder", "Search concepts…");
       expect(
         screen.getByText("Search for a concept above, or try:"),
@@ -288,7 +331,7 @@ describe("Search", () => {
 
     it("hides the example searches once a search is submitted", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -299,7 +342,7 @@ describe("Search", () => {
 
     it("searches an example term when it is clicked", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.click(screen.getByRole("button", { name: "heart failure" }));
 
@@ -308,22 +351,22 @@ describe("Search", () => {
     });
 
     it("does not search before anything is submitted", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       expect(lastSearchedTerm()).toBe("");
     });
 
     it("requests the first page", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       expect(lastSearchOptions()).toEqual({ limit: PAGE_SIZE, offset: 0 });
     });
 
     it("does not request suggestions", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       expect(lastSuggestionTerm()).toBe("");
     });
 
     it("shows no progress, summary, results, pagination, dropdown, or notification", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
       expect(queryStatus()).not.toBeInTheDocument();
       expect(screen.queryByRole("heading")).not.toBeInTheDocument();
@@ -336,7 +379,7 @@ describe("Search", () => {
   describe("submitting", () => {
     it("does not search while typing", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "asthma");
 
@@ -344,7 +387,7 @@ describe("Search", () => {
     });
 
     it("searches with the trimmed term on Enter", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("  asthma  ");
 
@@ -353,7 +396,7 @@ describe("Search", () => {
 
     it("searches when the Search button is clicked", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "asthma");
       await user.click(getSearchButton());
@@ -362,7 +405,7 @@ describe("Search", () => {
     });
 
     it("links the Search button to the search form", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const formId = screen.getByRole("search").getAttribute("id");
       expect(formId).toBeTruthy();
       expect(getSearchButton()).toHaveAttribute("form", formId);
@@ -370,7 +413,7 @@ describe("Search", () => {
 
     it("keeps the typed value after searching", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -385,7 +428,7 @@ describe("Search", () => {
 
     it(`requests suggestions only after a ${SUGGESTION_DELAY_MS} ms pause`, async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "asthma");
 
@@ -396,7 +439,7 @@ describe("Search", () => {
 
     it("requests only the text after the pause, not every keystroke", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "asthma");
       await waitFor(() => expect(lastSuggestionTerm()).toBe("asthma"));
@@ -405,7 +448,7 @@ describe("Search", () => {
     });
 
     it("never sends the typed text to the concept search", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await typeAndWaitForSuggestions("asth");
 
@@ -413,7 +456,7 @@ describe("Search", () => {
     });
 
     it("shows each suggestion's name only, without its id", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await typeAndWaitForSuggestions("asth");
 
@@ -436,7 +479,7 @@ describe("Search", () => {
           makeTerm("EFO:0000537", "hypertension"),
         ]),
       });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await typeAndWaitForSuggestions("hyper");
 
@@ -450,7 +493,7 @@ describe("Search", () => {
     it(`shows all ${SUGGESTION_UPSTREAM_CAP} names the server returns, in order`, async () => {
       const terms = makeTerms(SUGGESTION_UPSTREAM_CAP);
       mockSuggestions({ data: suggestionsOf(terms) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await typeAndWaitForSuggestions("concept");
 
@@ -464,7 +507,7 @@ describe("Search", () => {
       // More than the server sends today; guards the dropdown if the cap changes
       const terms = makeTerms(SUGGESTION_LIMIT + 5);
       mockSuggestions({ data: suggestionsOf(terms) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await typeAndWaitForSuggestions("concept");
 
@@ -474,7 +517,7 @@ describe("Search", () => {
     it("shows nothing when the server returns no suggestions", async () => {
       mockSuggestions({ data: suggestionsOf([]) });
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "zzzz");
       await waitFor(() => expect(lastSuggestionTerm()).toBe("zzzz"));
@@ -485,7 +528,7 @@ describe("Search", () => {
     it('shows "Searching…" while suggestions load', async () => {
       mockSuggestions({ isFetching: true });
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "asth");
 
@@ -499,7 +542,7 @@ describe("Search", () => {
         ...idle,
         data: suggestionsOf([asthma, childhoodAsthma]),
       });
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.clear(getInput());
@@ -509,7 +552,7 @@ describe("Search", () => {
     });
 
     it("does not search while suggestions are shown", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await typeAndWaitForSuggestions("asth");
 
@@ -524,7 +567,7 @@ describe("Search", () => {
     );
 
     it("searches for the selected label on click", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.click(
@@ -536,7 +579,7 @@ describe("Search", () => {
     });
 
     it("searches for the highlighted label on Enter", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.keyboard("{ArrowDown}{ArrowDown}{Enter}");
@@ -545,7 +588,7 @@ describe("Search", () => {
     });
 
     it("fills the input with the label and closes the dropdown", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.click(
@@ -558,7 +601,7 @@ describe("Search", () => {
 
     it("shows the results for the selected label", async () => {
       mockSearch({ data: resultsOf([childhoodAsthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.click(
@@ -578,7 +621,7 @@ describe("Search", () => {
       ];
       mockSuggestions({ data: suggestionsOf(shared) });
       mockSearch({ data: resultsOf(shared) });
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("hyper");
 
       expect(screen.getAllByRole("option")).toHaveLength(1);
@@ -589,7 +632,7 @@ describe("Search", () => {
     });
 
     it("does not request suggestions for the selected label", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.click(
@@ -602,7 +645,7 @@ describe("Search", () => {
     });
 
     it("shows the previous suggestions again when the input is clicked", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
       await user.click(
         screen.getByRole("option", { name: /Childhood asthma/ }),
@@ -619,7 +662,7 @@ describe("Search", () => {
 
     it("returns to page 1", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
       await user.click(screen.getByRole("button", { name: "Go to page 2" }));
 
@@ -638,7 +681,7 @@ describe("Search", () => {
     );
 
     it("searches the typed text, not a suggestion, when Search is clicked", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.click(getSearchButton());
@@ -649,7 +692,7 @@ describe("Search", () => {
     });
 
     it("searches the typed text on Enter when nothing is highlighted", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await typeAndWaitForSuggestions("asth");
 
       await user.keyboard("{Enter}");
@@ -662,7 +705,7 @@ describe("Search", () => {
     beforeEach(() => mockSearch({ isLoading: true }));
 
     it("shows an accessible progress indicator", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       await searchFor("asthma");
 
       expect(
@@ -671,7 +714,7 @@ describe("Search", () => {
     });
 
     it("keeps the search controls mounted, enabled, and focused", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       await searchFor("asthma");
 
       expect(getInput()).toHaveValue("asthma");
@@ -681,7 +724,7 @@ describe("Search", () => {
     });
 
     it("hides the summary, results, and pagination", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       await searchFor("asthma");
 
       expect(queryStatus()).not.toBeInTheDocument();
@@ -693,7 +736,7 @@ describe("Search", () => {
   describe("results", () => {
     it("shows a plural summary and one card per result, in order", async () => {
       mockSearch({ data: resultsOf([asthma, childhoodAsthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -707,7 +750,7 @@ describe("Search", () => {
       mockSearch({ data: resultsOf([asthma, childhoodAsthma]) });
       const onInclude = jest.fn();
       const onExclude = jest.fn();
-      render(<Search onInclude={onInclude} onExclude={onExclude} />);
+      render(<ConceptSearch onInclude={onInclude} onExclude={onExclude} />);
 
       const user = await searchFor("asthma");
       await user.click(screen.getAllByRole("button", { name: "+ Include" })[1]);
@@ -722,7 +765,7 @@ describe("Search", () => {
       const removeInclude = jest.fn();
       const onRemove = jest.fn(() => removeInclude);
       render(
-        <Search
+        <ConceptSearch
           onInclude={jest.fn()}
           onExclude={jest.fn()}
           criteria={{ include: [asthma], exclude: [], match: "all" }}
@@ -747,7 +790,7 @@ describe("Search", () => {
 
     it("shows no Include/Exclude buttons without handlers", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -757,7 +800,7 @@ describe("Search", () => {
 
     it("uses the singular for one result", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -768,7 +811,7 @@ describe("Search", () => {
 
     it("formats large totals with thousands separators", async () => {
       mockSearch({ data: resultsOf(makeTerms(PAGE_SIZE), { total: 3531 }) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("hyper");
 
@@ -779,7 +822,7 @@ describe("Search", () => {
 
     it("emphasizes the searched term", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -789,7 +832,7 @@ describe("Search", () => {
 
     it("exposes the summary as a polite live region", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -798,7 +841,7 @@ describe("Search", () => {
 
     it("shows the submitted term, not what is currently typed", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("asthma");
 
       await user.type(getInput(), " attack");
@@ -809,7 +852,7 @@ describe("Search", () => {
 
     it("hides the progress indicator", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -820,7 +863,7 @@ describe("Search", () => {
   describe("harmonized variables", () => {
     it("shows variable and term cards together, in the order returned", async () => {
       mockSearch({ data: resultsOf([systolicBp, asthma, childhoodAsthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("pressure");
 
@@ -833,7 +876,7 @@ describe("Search", () => {
 
     it("badges only the variable cards as harmonized variables", async () => {
       mockSearch({ data: resultsOf([systolicBp, asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("pressure");
 
@@ -842,7 +885,7 @@ describe("Search", () => {
 
     it("counts variables and terms together in the summary", async () => {
       mockSearch({ data: resultsOf([systolicBp, asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("pressure");
 
@@ -862,7 +905,7 @@ describe("Search", () => {
           asthma,
         ]),
       });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -878,7 +921,7 @@ describe("Search", () => {
   describe("no results", () => {
     it("shows an empty-state message", async () => {
       mockSearch({ data: resultsOf([]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("zzzz");
 
@@ -891,7 +934,7 @@ describe("Search", () => {
 
     it("treats missing data the same as an empty list", async () => {
       mockSearch({ data: undefined });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("zzzz");
 
@@ -905,7 +948,7 @@ describe("Search", () => {
     );
 
     it("opens an error notification with the error message", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       await searchFor("asthma");
 
       const alert = queryAlert("error");
@@ -913,14 +956,14 @@ describe("Search", () => {
     });
 
     it("does not show the summary or empty-state message on error", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       await searchFor("asthma");
 
       expect(queryStatus()).not.toBeInTheDocument();
     });
 
     it("stays closed after being dismissed", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("asthma");
 
       await dismiss(user, queryAlert("error") as HTMLElement);
@@ -929,7 +972,7 @@ describe("Search", () => {
     });
 
     it("opens again when a new search fails", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("asthma");
       await dismiss(user, queryAlert("error") as HTMLElement);
 
@@ -948,7 +991,7 @@ describe("Search", () => {
 
     it("opens a warning that search still works", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "asth");
 
@@ -959,7 +1002,7 @@ describe("Search", () => {
 
     it("does not open the search error notification", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await user.type(getInput(), "asth");
       await findAlert("warning");
@@ -968,13 +1011,13 @@ describe("Search", () => {
     });
 
     it("does not open before anything is typed", () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       expect(queryAlert("warning")).toBeNull();
     });
 
     it("stays closed after being dismissed", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
       await user.type(getInput(), "asth");
 
       await dismiss(user, await findAlert("warning"));
@@ -984,7 +1027,7 @@ describe("Search", () => {
 
     it("opens again when a later request fails with a new error", async () => {
       const user = userEvent.setup();
-      render(<Search />);
+      render(<ConceptSearch />);
       await user.type(getInput(), "asth");
       await dismiss(user, await findAlert("warning"));
 
@@ -996,7 +1039,7 @@ describe("Search", () => {
 
     it("still lets the user search", async () => {
       mockSearch({ data: resultsOf([asthma]) });
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("asthma");
 
@@ -1013,7 +1056,7 @@ describe("Search", () => {
     });
 
     it("shows both notifications at once", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       await searchFor("asthma");
 
       expect(await findAlert("warning")).toBeInTheDocument();
@@ -1021,7 +1064,7 @@ describe("Search", () => {
     });
 
     it("dismissing the search error leaves the autocomplete warning open", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("asthma");
       await findAlert("warning");
 
@@ -1032,7 +1075,7 @@ describe("Search", () => {
     });
 
     it("dismissing the autocomplete warning leaves the search error open", async () => {
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("asthma");
 
       await dismiss(user, await findAlert("warning"));
@@ -1045,7 +1088,7 @@ describe("Search", () => {
   describe("pagination", () => {
     it("shows placeholder cards instead of the previous page while the next loads", async () => {
       mockSearch({ data: resultsOf([asthma]), isPlaceholderData: true });
-      render(<Search onInclude={jest.fn()} />);
+      render(<ConceptSearch onInclude={jest.fn()} />);
 
       await searchFor("asthma");
 
@@ -1057,7 +1100,7 @@ describe("Search", () => {
 
     it("is hidden when all results fit on one page", async () => {
       mockPagedSearch(makeTerms(PAGE_SIZE));
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("concept");
 
@@ -1066,7 +1109,7 @@ describe("Search", () => {
 
     it("shows one button per page, starting on page 1", async () => {
       mockPagedSearch(makeTerms(45)); // 3 pages
-      render(<Search />);
+      render(<ConceptSearch />);
 
       await searchFor("concept");
 
@@ -1084,7 +1127,7 @@ describe("Search", () => {
 
     it("requests the selected page's offset", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
 
       await user.click(screen.getByRole("button", { name: "Go to page 2" }));
@@ -1095,7 +1138,7 @@ describe("Search", () => {
 
     it("shows the range and results for the current page", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
 
       await user.click(screen.getByRole("button", { name: "Go to page 2" }));
@@ -1111,7 +1154,7 @@ describe("Search", () => {
 
     it("shows a partial range on the last page", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
 
       await user.click(screen.getByRole("button", { name: "Go to page 3" }));
@@ -1122,7 +1165,7 @@ describe("Search", () => {
 
     it("marks the selected page as current", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
 
       await user.click(screen.getByRole("button", { name: "Go to page 2" }));
@@ -1134,7 +1177,7 @@ describe("Search", () => {
 
     it("scrolls back to the top on page change", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
 
       await user.click(screen.getByRole("button", { name: "Go to page 2" }));
@@ -1144,7 +1187,7 @@ describe("Search", () => {
 
     it("scrolls the result list back to the top on page change", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
       const list = screen
         .getAllByRole("heading", { level: 2 })[0]
@@ -1158,7 +1201,7 @@ describe("Search", () => {
 
     it("returns to page 1 on a new search", async () => {
       mockPagedSearch(makeTerms(45));
-      render(<Search />);
+      render(<ConceptSearch />);
       const user = await searchFor("concept");
       await user.click(screen.getByRole("button", { name: "Go to page 2" }));
 
@@ -1179,12 +1222,104 @@ describe("Search", () => {
     });
   });
 
+  describe("URL", () => {
+    it("searches the query in the URL on load", () => {
+      mockSearch({ data: resultsOf([asthma]) });
+      render(<ConceptSearch />, "/build?q=asthma");
+
+      expect(lastSearchedTerm()).toBe("asthma");
+      expect(getInput()).toHaveValue("asthma");
+      expect(getStatus()).toHaveTextContent('matching "asthma"');
+      expect(
+        screen.queryByText("Search for a concept above, or try:"),
+      ).toBeNull();
+    });
+
+    it("requests the page in the URL", () => {
+      mockPagedSearch(makeTerms(45));
+      render(<ConceptSearch />, "/build?q=concept&page=2");
+
+      expect(lastSearchOptions()).toEqual({ limit: PAGE_SIZE, offset: 20 });
+      expect(screen.getByRole("button", { name: "page 2" })).toHaveAttribute(
+        "aria-current",
+      );
+    });
+
+    it.each(["0", "-3", "abc", ""])(
+      'falls back to page 1 for page="%s"',
+      (page) => {
+        render(<ConceptSearch />, `/build?q=concept&page=${page}`);
+        expect(lastSearchOptions()).toEqual({ limit: PAGE_SIZE, offset: 0 });
+      },
+    );
+
+    it("rounds a fractional page down", () => {
+      render(<ConceptSearch />, "/build?q=concept&page=2.5");
+      expect(lastSearchOptions()).toEqual({ limit: PAGE_SIZE, offset: 20 });
+    });
+
+    it("writes the trimmed query to the URL and drops the page", async () => {
+      mockPagedSearch(makeTerms(45));
+      const user = userEvent.setup();
+      render(<ConceptSearch />, "/build?q=concept&page=2");
+
+      await user.clear(getInput());
+      await user.type(getInput(), "  asthma  {Enter}");
+
+      expect(currentUrl()).toBe("/build?q=asthma");
+    });
+
+    it("adds the page to the URL, and removes it again on page 1", async () => {
+      mockPagedSearch(makeTerms(45));
+      render(<ConceptSearch />);
+      const user = await searchFor("concept");
+
+      await user.click(screen.getByRole("button", { name: "Go to page 2" }));
+      expect(currentUrl()).toBe("/build?q=concept&page=2");
+
+      await user.click(screen.getByRole("button", { name: "Go to page 1" }));
+      expect(currentUrl()).toBe("/build?q=concept");
+    });
+
+    it("goes back to the previous search on Back", async () => {
+      render(<ConceptSearch />);
+      const user = await searchFor("asthma");
+      await user.clear(getInput());
+      await user.type(getInput(), "copd{Enter}");
+
+      await goBack(user);
+
+      expect(currentUrl()).toBe("/build?q=asthma");
+      expect(lastSearchedTerm()).toBe("asthma");
+      expect(getInput()).toHaveValue("asthma");
+    });
+
+    it("leaves the search on Back after paging, instead of stepping through pages", async () => {
+      mockPagedSearch(makeTerms(45));
+      render(<ConceptSearch />);
+      const user = await searchFor("concept");
+      await user.click(screen.getByRole("button", { name: "Go to page 2" }));
+      await user.click(screen.getByRole("button", { name: "Go to page 3" }));
+
+      await goBack(user);
+
+      expect(currentUrl()).toBe("/build");
+      expect(lastSearchedTerm()).toBe("");
+      expect(getInput()).toHaveValue("");
+      expect(
+        screen.getByText("Search for a concept above, or try:"),
+      ).toBeInTheDocument();
+    });
+  });
+
+  // Instances under one router share the URL's query; these check that
+  // each still has its own form
   describe("multiple instances", () => {
     it("gives each instance its own form id", () => {
       render(
         <>
-          <Search />
-          <Search />
+          <ConceptSearch />
+          <ConceptSearch />
         </>,
       );
       const ids = screen
@@ -1197,8 +1332,8 @@ describe("Search", () => {
       const user = userEvent.setup();
       render(
         <>
-          <Search />
-          <Search />
+          <ConceptSearch />
+          <ConceptSearch />
         </>,
       );
       const [firstInput, secondInput] = screen.getAllByRole("combobox");

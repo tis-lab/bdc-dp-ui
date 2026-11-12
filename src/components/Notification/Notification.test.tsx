@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { AlertColor } from "@mui/material";
 import Notification from "./Notification";
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 const AUTO_HIDE_MS = 5000;
 
@@ -51,6 +51,36 @@ describe("Notification", () => {
     it("shows a close button when onClose is provided", () => {
       renderNotification({ onClose: jest.fn() });
       expect(queryCloseButton()).toBeInTheDocument();
+    });
+  });
+
+  describe("placement", () => {
+    // Rendered in place, the Snackbar became a sibling in its parent's
+    // Stack and pushed the next element down by the Stack's spacing
+    it("renders outside its parent, so it never shifts the layout around it", () => {
+      render(
+        <div data-testid="parent">
+          <Notification
+            open
+            severity="error"
+            message="Network down"
+            onClose={jest.fn()}
+          />
+        </div>,
+      );
+
+      expect(screen.getByRole("alert")).toHaveTextContent("Network down");
+      expect(screen.getByTestId("parent")).toBeEmptyDOMElement();
+    });
+
+    it("leaves its parent empty while closed, too", () => {
+      render(
+        <div data-testid="parent">
+          <Notification open={false} severity="error" onClose={jest.fn()} />
+        </div>,
+      );
+
+      expect(screen.getByTestId("parent")).toBeEmptyDOMElement();
     });
   });
 

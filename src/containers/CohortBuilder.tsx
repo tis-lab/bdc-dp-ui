@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Container, Divider } from "@mui/material";
-import Search from "./Search";
+import ConceptSearch from "../components/ConceptSearch";
 import CohortCriteria from "../components/CohortCriteria";
 import CohortSnapshot from "../components/CohortSnapshot";
 import Demographics from "../components/Demographics";
@@ -63,7 +63,7 @@ export default function CohortBuilder() {
     <Container maxWidth="lg">
       <CohortBuilderLayout>
         <Column>
-          <Search
+          <ConceptSearch
             onInclude={handleInclude}
             onExclude={handleExclude}
             criteria={criteria}

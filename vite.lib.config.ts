@@ -24,6 +24,7 @@ export default defineConfig({
       external: [
         /^react($|\/)/,
         /^react-dom($|\/)/,
+        /^react-router($|\/)/,
         /^@emotion\//,
         /^@mui\//,
         /^echarts($|\/)/,

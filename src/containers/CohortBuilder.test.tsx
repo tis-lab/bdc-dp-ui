@@ -5,6 +5,7 @@ import CohortBuilder from "./CohortBuilder";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
 import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
+import type { Criteria, CriteriaKind } from "../hooks/useCohortSummary";
 
 const ORIGINAL_ENV = process.env;
 const AVAILABLE = "2,000";
@@ -44,16 +45,26 @@ const mockDiabetes: SearchItem = {
   label: "Diabetes",
 };
 
-// Search has its own tests; this stub only reports clicks.
+const mockLabels = (items: SearchItem[]) =>
+  items
+    .map((i) => (i.__typename === "Term" ? i.label : i.displayLabel))
+    .join(", ");
+
+// ConceptSearch has its own tests; this stub reports clicks and shows the
+// criteria it was given, the way its results mark what's already added.
 // jest.mock factories may only use outside variables named mock*.
-jest.mock("./Search", () => ({
+jest.mock("../components/ConceptSearch", () => ({
   __esModule: true,
   default: ({
     onInclude,
     onExclude,
+    criteria,
+    onRemove,
   }: {
     onInclude: (item: SearchItem) => void;
     onExclude: (item: SearchItem) => void;
+    criteria: Criteria;
+    onRemove: (kind: CriteriaKind) => (item: SearchItem) => void;
   }) => (
     <div>
       <button onClick={() => onInclude(mockHypertension)}>
@@ -65,6 +76,11 @@ jest.mock("./Search", () => ({
       <button onClick={() => onInclude(mockDiabetes)}>
         include other result
       </button>
+      <button onClick={() => onRemove("include")(mockHypertension)}>
+        unmark included result
+      </button>
+      <p data-testid="search-included">{mockLabels(criteria.include)}</p>
+      <p data-testid="search-excluded">{mockLabels(criteria.exclude)}</p>
     </div>
   ),
 }));
@@ -184,6 +200,38 @@ describe("CohortBuilder", () => {
 
     expect(screen.getByText("No criteria added yet")).toBeInTheDocument();
     expect(querySection("Include")).toBeNull();
+  });
+
+  describe("wiring to ConceptSearch", () => {
+    it("tells the search what is included and excluded", async () => {
+      const user = userEvent.setup();
+      renderBuilder();
+      expect(screen.getByTestId("search-included")).toBeEmptyDOMElement();
+
+      await user.click(screen.getByRole("button", { name: "include result" }));
+      expect(screen.getByTestId("search-included")).toHaveTextContent(
+        "Hypertension",
+      );
+
+      await user.click(screen.getByRole("button", { name: "exclude result" }));
+      expect(screen.getByTestId("search-included")).toBeEmptyDOMElement();
+      expect(screen.getByTestId("search-excluded")).toHaveTextContent(
+        "Hypertension",
+      );
+    });
+
+    it("removes a concept when it is unmarked in the search", async () => {
+      const user = userEvent.setup();
+      renderBuilder();
+
+      await user.click(screen.getByRole("button", { name: "include result" }));
+      await user.click(
+        screen.getByRole("button", { name: "unmark included result" }),
+      );
+
+      expect(screen.getByText("No criteria added yet")).toBeInTheDocument();
+      expect(screen.getByTestId("search-included")).toBeEmptyDOMElement();
+    });
   });
 
   describe("cohort overview", () => {

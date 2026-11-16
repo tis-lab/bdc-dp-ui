@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { getGraphQLEndpoint } from "../api/config";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
 import {
   RESOLVE_TERMS_QUERY,
   type ResolveTermsData,
   type ResolveTermsVariables,
 } from "../api/graphql/queries/resolveTerms";
+import { useQueryEndpoint } from "../contexts/ApiContext";
 
 interface ConceptSearchOptions {
   limit?: number;
@@ -17,6 +17,7 @@ export const useConceptSearch = (
   searchText: string,
   { limit = 20, offset = 0 }: ConceptSearchOptions = {},
 ) => {
+  const endpoint = useQueryEndpoint("open");
   const query = searchText.trim();
 
   return useQuery({
@@ -26,7 +27,7 @@ export const useConceptSearch = (
         ResolveTermsData,
         ResolveTermsVariables
       >({
-        endpoint: getGraphQLEndpoint(),
+        endpoint,
         query: RESOLVE_TERMS_QUERY,
         variables: { query, limit, offset },
         signal,

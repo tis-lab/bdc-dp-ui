@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { getGraphQLEndpoint } from "../api/config";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import {
@@ -8,6 +7,7 @@ import {
   type CohortSummaryVariables,
   type SummaryFilter,
 } from "../api/graphql/queries/cohortSummary";
+import { useQueryEndpoint } from "../contexts/ApiContext";
 
 export type CriteriaKind = "include" | "exclude";
 
@@ -41,15 +41,19 @@ export const summaryFilter = (
 ): SummaryFilter | null => {
   const included = group(
     match === "any" ? "or" : "and",
-    include.map((concept): SummaryFilter => ({
-      condition: { concept, selection: "INCLUDE" },
-    })),
+    include.map(
+      (concept): SummaryFilter => ({
+        condition: { concept, selection: "INCLUDE" },
+      }),
+    ),
   );
   return group("and", [
     ...(included ? [included] : []),
-    ...exclude.map((concept): SummaryFilter => ({
-      condition: { concept, selection: "EXCLUDE" },
-    })),
+    ...exclude.map(
+      (concept): SummaryFilter => ({
+        condition: { concept, selection: "EXCLUDE" },
+      }),
+    ),
   ]);
 };
 
@@ -59,6 +63,8 @@ export const useCohortSummary = (criteria: Criteria) => {
   const exclude = criteria.exclude.map(conceptOf).sort();
   const filter = summaryFilter(include, exclude, criteria.match);
 
+  const endpoint = useQueryEndpoint("open");
+
   return useQuery({
     queryKey: ["cohortSummary", filter],
     queryFn: async ({ signal }) => {
@@ -66,7 +72,7 @@ export const useCohortSummary = (criteria: Criteria) => {
         CohortSummaryData,
         CohortSummaryVariables
       >({
-        endpoint: getGraphQLEndpoint(),
+        endpoint,
         query: COHORT_SUMMARY_QUERY,
         variables: { filter },
         signal,

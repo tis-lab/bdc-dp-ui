@@ -21,7 +21,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <Root apiBaseUrl="" />
+        <Root />
       </BrowserRouter>
     </ThemeProvider>
   </StrictMode>,

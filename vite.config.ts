@@ -1,8 +1,16 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const middleware = env.MIDDLEWARE_URL;
+
+  if (command === "serve" && !/^https?:\/\//.test(middleware ?? "")) {
+    throw new Error(
+      `CB_MIDDLEWARE_URL must be an http(s) URL, got: ${middleware}`,
+    );
+  }
+
   return {
     plugins: [react()],
     server: {
@@ -11,8 +19,8 @@ export default defineConfig(({ mode }) => {
         : [],
       port: 3000,
       proxy: {
-        "/cb": {
-          target: env.CB_MIDDLEWARE_URL,
+        "^/api/cb/open/query$": {
+          target: middleware,
           changeOrigin: true,
           secure: true,
         },

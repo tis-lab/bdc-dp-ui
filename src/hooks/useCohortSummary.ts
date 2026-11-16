@@ -7,7 +7,7 @@ import {
   type CohortSummaryVariables,
   type SummaryFilter,
 } from "../api/graphql/queries/cohortSummary";
-import { useQueryEndpoint } from "../contexts/ApiContext";
+import { getQueryEndpoint } from "../api/queryEndpoint";
 
 export type CriteriaKind = "include" | "exclude";
 
@@ -59,11 +59,11 @@ export const summaryFilter = (
 
 /** Disabled until at least one concept is included or excluded. */
 export const useCohortSummary = (criteria: Criteria) => {
+  const endpoint = getQueryEndpoint("open");
+
   const include = criteria.include.map(conceptOf).sort();
   const exclude = criteria.exclude.map(conceptOf).sort();
   const filter = summaryFilter(include, exclude, criteria.match);
-
-  const endpoint = useQueryEndpoint("open");
 
   return useQuery({
     queryKey: ["cohortSummary", filter],

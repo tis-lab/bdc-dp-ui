@@ -19,7 +19,7 @@ describe("Root", () => {
   it("renders the cohort builder inside its providers at /build", () => {
     render(
       <MemoryRouter initialEntries={["/build"]}>
-        <Root apiBaseUrl="" />
+        <Root />
       </MemoryRouter>,
     );
 

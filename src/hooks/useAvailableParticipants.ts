@@ -4,14 +4,14 @@ import {
   PAGE_LOAD_SNAPSHOT_QUERY,
   type PageLoadSnapshotData,
 } from "../api/graphql/queries/pageLoadSnapshot";
-import { useQueryEndpoint } from "../contexts/ApiContext";
+import { getQueryEndpoint } from "../api/queryEndpoint";
 
 /**
  * Participants available, from pageLoadSnapshot. Fetched once per session.
  * null when the count is missing or suppressed.
  */
 export const useAvailableParticipants = () => {
-  const endpoint = useQueryEndpoint("open");
+  const endpoint = getQueryEndpoint("open");
   return useQuery({
     queryKey: ["availableParticipants"],
     queryFn: async ({ signal }) => {

@@ -5,7 +5,7 @@ import {
   type ResolveTermsData,
   type ResolveTermsVariables,
 } from "../api/graphql/queries/resolveTerms";
-import { useQueryEndpoint } from "../contexts/ApiContext";
+import { getQueryEndpoint } from "../api/queryEndpoint";
 
 interface ConceptSearchOptions {
   limit?: number;
@@ -17,7 +17,8 @@ export const useConceptSearch = (
   searchText: string,
   { limit = 20, offset = 0 }: ConceptSearchOptions = {},
 ) => {
-  const endpoint = useQueryEndpoint("open");
+  const endpoint = getQueryEndpoint("open");
+
   const query = searchText.trim();
 
   return useQuery({

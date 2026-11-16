@@ -37,7 +37,6 @@ The component does not set up routing or theming itself. The host is responsible
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | React Router v7 router | Mount the component under a **splat route** (e.g. `path="/cohort-builder/*"`). Without the trailing `/*`, the Cohort Builder's internal routes will not match. |
 | MUI `ThemeProvider`    | Wrap the component in an MUI `ThemeProvider`. The Cohort Builder uses the host's theme and does not supply its own.                                            |
-| `apiBaseUrl` prop      | Base URL for API requests. See the props table below.                                                                                                          |
 
 ## Migration
 

@@ -5,10 +5,11 @@ import {
   type AutocompleteData,
   type AutocompleteVariables,
 } from "../api/graphql/queries/autocomplete";
-import { useQueryEndpoint } from "../contexts/ApiContext";
+import { getQueryEndpoint } from "../api/queryEndpoint";
 
 export const useConceptSuggestions = (searchText: string) => {
-  const endpoint = useQueryEndpoint("open");
+  const endpoint = getQueryEndpoint("open");
+
   const query = searchText.trim();
 
   return useQuery({

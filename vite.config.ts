@@ -7,7 +7,7 @@ export default defineConfig(({ command, mode }) => {
 
   if (command === "serve" && !/^https?:\/\//.test(middleware ?? "")) {
     throw new Error(
-      `CB_MIDDLEWARE_URL must be an http(s) URL, got: ${middleware}`,
+      `MIDDLEWARE_URL must be an http(s) URL, got: ${middleware}`,
     );
   }
 

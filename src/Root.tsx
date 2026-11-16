@@ -5,7 +5,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ApiBaseUrlProvider } from "./contexts/ApiContext";
 
 export interface CohortBuilderProps {
-  /** "/api" behind framework's Apache; middleware origin when standalone. */
+  /** "/api" behind framework's Apache
+   *  "/" when standalone */
   apiBaseUrl: string;
 }
 

@@ -27,6 +27,18 @@ The standalone app is hosted on UNC Cloudapps Openshift environment (see link in
 
 The build pulls from the `main` branch. Once it succeeds, the new version rolls out automatically.
 
+## Embedding in a Host App
+
+### What the host app must provide
+
+The component does not set up routing or theming itself. The host is responsible for three things:
+
+| Requirement            | Details                                                                                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| React Router v7 router | Mount the component under a **splat route** (e.g. `path="/cohort-builder/*"`). Without the trailing `/*`, the Cohort Builder's internal routes will not match. |
+| MUI `ThemeProvider`    | Wrap the component in an MUI `ThemeProvider`. The Cohort Builder uses the host's theme and does not supply its own.                                            |
+| `apiBaseUrl` prop      | Base URL for API requests. See the props table below.                                                                                                          |
+
 ## Migration
 
 Please refer to MIGRATE.md

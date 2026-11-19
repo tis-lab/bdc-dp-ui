@@ -27,8 +27,6 @@ export default defineConfig({
         /^react-router($|\/)/,
         /^@emotion\//,
         /^@mui\//,
-        /^echarts($|\/)/,
-        /^echarts-for-react($|\/)/,
       ],
     },
     sourcemap: true,

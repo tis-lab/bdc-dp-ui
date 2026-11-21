@@ -19,17 +19,18 @@ const studiesOf = (...counts: number[]): SummaryResponse => ({
   })),
 });
 
-/** A fixed cohort per filter shape: AND, OR, or a single condition. */
-const summaryFor = (filter: Record<string, unknown>) =>
-  "and" in filter
-    ? studiesOf(250, 200)
-    : "or" in filter
-      ? studiesOf(600, 600)
-      : t2dSummary;
-
-const pageLoadSnapshot = {
-  participantCount: { value: 2000, suppressed: false },
-};
+/**
+ * A fixed cohort per filter shape: none (page load), AND, OR, or a single
+ * condition. The page load total (1,200 + 800) is AVAILABLE.
+ */
+const summaryFor = (filter: Record<string, unknown> | null) =>
+  filter === null
+    ? studiesOf(1200, 800)
+    : "and" in filter
+      ? studiesOf(250, 200)
+      : "or" in filter
+        ? studiesOf(600, 600)
+        : t2dSummary;
 
 const mockHypertension: SearchItem = {
   __typename: "Term",
@@ -89,10 +90,8 @@ jest.mock("../components/ConceptSearch", () => ({
 
 beforeEach(() => {
   jest.spyOn(globalThis, "fetch").mockImplementation(async (_, init) => {
-    const { query, variables } = JSON.parse(init?.body as string);
-    const data = query.includes("pageLoadSnapshot")
-      ? { pageLoadSnapshot }
-      : { summary: summaryFor(variables.filter) };
+    const { variables } = JSON.parse(init?.body as string);
+    const data = { summary: summaryFor(variables.filter) };
     return new Response(JSON.stringify({ data }), { status: 200 });
   });
 });
@@ -229,7 +228,7 @@ describe("CohortBuilder", () => {
   });
 
   describe("cohort overview", () => {
-    it("asks only for the page load snapshot on page load, and shows its total", async () => {
+    it("asks only for the unfiltered summary on page load, and shows its total", async () => {
       renderBuilder();
 
       expect(await screen.findByText(AVAILABLE)).toBeInTheDocument();
@@ -237,7 +236,8 @@ describe("CohortBuilder", () => {
         screen.getByText("Include a concept to see its demographic breakdown."),
       ).toBeInTheDocument();
       expect(sentBodies()).toHaveLength(1);
-      expect(sentBodies()[0].query).toContain("pageLoadSnapshot");
+      expect(sentBodies()[0].query).toContain("summary");
+      expect(sentBodies()[0].variables).toEqual({ filter: null });
       expect(sentUrls()).toEqual([ENDPOINT]);
     });
 

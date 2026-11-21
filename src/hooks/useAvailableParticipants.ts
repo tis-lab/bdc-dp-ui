@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
 import {
-  PAGE_LOAD_SNAPSHOT_QUERY,
-  type PageLoadSnapshotData,
-} from "../api/graphql/queries/pageLoadSnapshot";
+  COHORT_SUMMARY_QUERY,
+  type CohortSummaryData,
+  type CohortSummaryVariables,
+} from "../api/graphql/queries/cohortSummary";
 import { getQueryEndpoint } from "../api/queryEndpoint";
 
 /**
@@ -15,14 +16,18 @@ export const useAvailableParticipants = () => {
   return useQuery({
     queryKey: ["availableParticipants"],
     queryFn: async ({ signal }) => {
-      const data = await graphqlRequest<PageLoadSnapshotData, object>({
+      const data = await graphqlRequest<
+        CohortSummaryData,
+        CohortSummaryVariables
+      >({
         endpoint,
-        query: PAGE_LOAD_SNAPSHOT_QUERY,
-        variables: {},
+        query: COHORT_SUMMARY_QUERY,
+        variables: { filter: null },
         signal,
       });
-      const count = data?.pageLoadSnapshot?.participantCount;
-      return count && !count.suppressed ? count.value : null;
+      const studies = data?.summary?.studies;
+      if (!studies?.length) return null;
+      return studies.reduce((sum, s) => sum + s.participant_count, 0);
     },
     staleTime: Infinity,
   });

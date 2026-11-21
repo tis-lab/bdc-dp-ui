@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { getGraphQLEndpoint } from "../api/config";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
 import {
   AUTOCOMPLETE_QUERY,
   type AutocompleteData,
   type AutocompleteVariables,
 } from "../api/graphql/queries/autocomplete";
+import { getQueryEndpoint } from "../api/queryEndpoint";
 
 export const useConceptSuggestions = (searchText: string) => {
+  const endpoint = getQueryEndpoint("open");
+
   const query = searchText.trim();
 
   return useQuery({
@@ -17,7 +19,7 @@ export const useConceptSuggestions = (searchText: string) => {
         AutocompleteData,
         AutocompleteVariables
       >({
-        endpoint: getGraphQLEndpoint(),
+        endpoint,
         query: AUTOCOMPLETE_QUERY,
         variables: { query },
         signal,

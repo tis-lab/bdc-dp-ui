@@ -1,13 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CohortBuilder from "./CohortBuilder";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
 import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
 import type { Criteria, CriteriaKind } from "../hooks/useCohortSummary";
+import {
+  createWrapper,
+  OPEN_ENDPOINT as ENDPOINT,
+} from "../test/createWrapper";
 
-const ORIGINAL_ENV = process.env;
 const AVAILABLE = "2,000";
 
 const studiesOf = (...counts: number[]): SummaryResponse => ({
@@ -17,17 +19,18 @@ const studiesOf = (...counts: number[]): SummaryResponse => ({
   })),
 });
 
-/** A fixed cohort per filter shape: AND, OR, or a single condition. */
-const summaryFor = (filter: Record<string, unknown>) =>
-  "and" in filter
-    ? studiesOf(250, 200)
-    : "or" in filter
-      ? studiesOf(600, 600)
-      : t2dSummary;
-
-const pageLoadSnapshot = {
-  participantCount: { value: 2000, suppressed: false },
-};
+/**
+ * A fixed cohort per filter shape: none (page load), AND, OR, or a single
+ * condition. The page load total (1,200 + 800) is AVAILABLE.
+ */
+const summaryFor = (filter: Record<string, unknown> | null) =>
+  filter === null
+    ? studiesOf(1200, 800)
+    : "and" in filter
+      ? studiesOf(250, 200)
+      : "or" in filter
+        ? studiesOf(600, 600)
+        : t2dSummary;
 
 const mockHypertension: SearchItem = {
   __typename: "Term",
@@ -86,15 +89,9 @@ jest.mock("../components/ConceptSearch", () => ({
 }));
 
 beforeEach(() => {
-  process.env = {
-    ...ORIGINAL_ENV,
-    VITE_GRAPHQL_URL: "https://graphql.test/graphql",
-  };
   jest.spyOn(globalThis, "fetch").mockImplementation(async (_, init) => {
-    const { query, variables } = JSON.parse(init?.body as string);
-    const data = query.includes("pageLoadSnapshot")
-      ? { pageLoadSnapshot }
-      : { summary: summaryFor(variables.filter) };
+    const { variables } = JSON.parse(init?.body as string);
+    const data = { summary: summaryFor(variables.filter) };
     return new Response(JSON.stringify({ data }), { status: 200 });
   });
 });
@@ -104,20 +101,16 @@ const sentBodies = () =>
     .mocked(globalThis.fetch)
     .mock.calls.map(([, init]) => JSON.parse(init?.body as string));
 
+const sentUrls = () =>
+  jest.mocked(globalThis.fetch).mock.calls.map(([url]) => url);
+
 afterEach(() => {
-  process.env = ORIGINAL_ENV;
   jest.restoreAllMocks();
 });
 
 const renderBuilder = () => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return render(
-    <QueryClientProvider client={client}>
-      <CohortBuilder />
-    </QueryClientProvider>,
-  );
+  const { wrapper } = createWrapper();
+  return render(<CohortBuilder />, { wrapper });
 };
 
 const querySection = (name: "Include" | "Exclude") =>
@@ -235,7 +228,7 @@ describe("CohortBuilder", () => {
   });
 
   describe("cohort overview", () => {
-    it("asks only for the page load snapshot on page load, and shows its total", async () => {
+    it("asks only for the unfiltered summary on page load, and shows its total", async () => {
       renderBuilder();
 
       expect(await screen.findByText(AVAILABLE)).toBeInTheDocument();
@@ -243,7 +236,9 @@ describe("CohortBuilder", () => {
         screen.getByText("Include a concept to see its demographic breakdown."),
       ).toBeInTheDocument();
       expect(sentBodies()).toHaveLength(1);
-      expect(sentBodies()[0].query).toContain("pageLoadSnapshot");
+      expect(sentBodies()[0].query).toContain("summary");
+      expect(sentBodies()[0].variables).toEqual({ filter: null });
+      expect(sentUrls()).toEqual([ENDPOINT]);
     });
 
     it("shows an error instead of the counts when the page load request fails", async () => {
@@ -272,6 +267,7 @@ describe("CohortBuilder", () => {
       expect(sentBodies().at(-1).variables).toEqual({
         filter: { condition: { concept: "HP:0000822", selection: "INCLUDE" } },
       });
+      expect(new Set(sentUrls())).toEqual(new Set([ENDPOINT]));
     });
 
     it("sends an exclude as an EXCLUDE condition", async () => {

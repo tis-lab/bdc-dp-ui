@@ -1,27 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
-import { getGraphQLEndpoint } from "../api/config";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
 import {
-  PAGE_LOAD_SNAPSHOT_QUERY,
-  type PageLoadSnapshotData,
-} from "../api/graphql/queries/pageLoadSnapshot";
+  COHORT_SUMMARY_QUERY,
+  type CohortSummaryData,
+  type CohortSummaryVariables,
+} from "../api/graphql/queries/cohortSummary";
+import { getQueryEndpoint } from "../api/queryEndpoint";
 
 /**
  * Participants available, from pageLoadSnapshot. Fetched once per session.
  * null when the count is missing or suppressed.
  */
-export const useAvailableParticipants = () =>
-  useQuery({
+export const useAvailableParticipants = () => {
+  const endpoint = getQueryEndpoint("open");
+  return useQuery({
     queryKey: ["availableParticipants"],
     queryFn: async ({ signal }) => {
-      const data = await graphqlRequest<PageLoadSnapshotData, object>({
-        endpoint: getGraphQLEndpoint(),
-        query: PAGE_LOAD_SNAPSHOT_QUERY,
-        variables: {},
+      const data = await graphqlRequest<
+        CohortSummaryData,
+        CohortSummaryVariables
+      >({
+        endpoint,
+        query: COHORT_SUMMARY_QUERY,
+        variables: { filter: null },
         signal,
       });
-      const count = data?.pageLoadSnapshot?.participantCount;
-      return count && !count.suppressed ? count.value : null;
+      const studies = data?.summary?.studies;
+      if (!studies?.length) return null;
+      return studies.reduce((sum, s) => sum + s.participant_count, 0);
     },
     staleTime: Infinity,
   });
+};

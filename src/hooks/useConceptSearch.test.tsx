@@ -1,14 +1,14 @@
-import type { ReactNode } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { useConceptSearch } from "./useConceptSearch";
 import {
   RESOLVE_TERMS_QUERY,
   type TermsPage,
 } from "../api/graphql/queries/resolveTerms";
-
-const ENDPOINT = "https://graphql.test/graphql";
-const ORIGINAL_ENV = process.env;
+import {
+  createWrapper,
+  OPEN_ENDPOINT as ENDPOINT,
+} from "../test/createWrapper";
 
 const termsPage: TermsPage = {
   items: [
@@ -50,18 +50,8 @@ const termsPage: TermsPage = {
   bdcConceptCount: 1,
 };
 
-const createWrapper = () => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  );
-  return { client, wrapper };
-};
-
-const wrapper = ({ children }: { children: ReactNode }) =>
-  createWrapper().wrapper({ children });
+let client: QueryClient;
+let wrapper: ReturnType<typeof createWrapper>["wrapper"];
 
 const mockResponse = (body: unknown) =>
   jest
@@ -71,12 +61,10 @@ const mockResponse = (body: unknown) =>
 describe("useConceptSearch", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
-    process.env = { ...ORIGINAL_ENV, VITE_GRAPHQL_URL: ENDPOINT };
+    ({ client, wrapper } = createWrapper());
   });
 
-  afterEach(() => {
-    process.env = ORIGINAL_ENV;
-  });
+  afterEach(() => client.clear());
 
   it("does not run for empty or blank search text", () => {
     const fetchSpy = jest.spyOn(globalThis, "fetch");
@@ -222,18 +210,5 @@ describe("useConceptSearch", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(result.current.error?.message).toBe("Missing terms response");
-  });
-
-  it("fails without a request when VITE_GRAPHQL_URL is not set", async () => {
-    process.env.VITE_GRAPHQL_URL = "";
-    const fetchSpy = jest.spyOn(globalThis, "fetch");
-
-    const { result } = renderHook(() => useConceptSearch("diabetes"), {
-      wrapper,
-    });
-    await waitFor(() => expect(result.current.isError).toBe(true));
-
-    expect(result.current.error?.message).toBe("VITE_GRAPHQL_URL is not set");
-    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

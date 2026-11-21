@@ -5,7 +5,7 @@ import { Panel, PanelTitle } from "../components/Panel/Panel.styles";
 import ConceptSearchbar from "../components/ConceptSearchbar";
 import { useId } from "react";
 
-const BUILD_PATH = "/build";
+const BUILD_PATH = "build";
 
 export default function Landing() {
   const searchSectionId = useId();

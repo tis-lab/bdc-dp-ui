@@ -8,6 +8,7 @@ import {
   type SummaryFilter,
 } from "../api/graphql/queries/cohortSummary";
 import { getQueryEndpoint } from "../api/queryEndpoint";
+import { useFetch } from "../contexts/FetchContext";
 
 export type CriteriaKind = "include" | "exclude";
 
@@ -60,6 +61,7 @@ export const summaryFilter = (
 /** Disabled until at least one concept is included or excluded. */
 export const useCohortSummary = (criteria: Criteria) => {
   const endpoint = getQueryEndpoint("open");
+  const fetch = useFetch();
 
   const include = criteria.include.map(conceptOf).sort();
   const exclude = criteria.exclude.map(conceptOf).sort();
@@ -72,6 +74,7 @@ export const useCohortSummary = (criteria: Criteria) => {
         CohortSummaryData,
         CohortSummaryVariables
       >({
+        fetch,
         endpoint,
         query: COHORT_SUMMARY_QUERY,
         variables: { filter },

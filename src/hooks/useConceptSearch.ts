@@ -6,6 +6,7 @@ import {
   type ResolveTermsVariables,
 } from "../api/graphql/queries/resolveTerms";
 import { getQueryEndpoint } from "../api/queryEndpoint";
+import { useFetch } from "../contexts/FetchContext";
 
 interface ConceptSearchOptions {
   limit?: number;
@@ -18,6 +19,7 @@ export const useConceptSearch = (
   { limit = 20, offset = 0 }: ConceptSearchOptions = {},
 ) => {
   const endpoint = getQueryEndpoint("open");
+  const fetch = useFetch();
 
   const query = searchText.trim();
 
@@ -28,6 +30,7 @@ export const useConceptSearch = (
         ResolveTermsData,
         ResolveTermsVariables
       >({
+        fetch,
         endpoint,
         query: RESOLVE_TERMS_QUERY,
         variables: { query, limit, offset },

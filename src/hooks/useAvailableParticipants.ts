@@ -6,6 +6,7 @@ import {
   type CohortSummaryVariables,
 } from "../api/graphql/queries/cohortSummary";
 import { getQueryEndpoint } from "../api/queryEndpoint";
+import { useFetch } from "../contexts/FetchContext";
 
 /**
  * Participants available, from pageLoadSnapshot. Fetched once per session.
@@ -13,6 +14,8 @@ import { getQueryEndpoint } from "../api/queryEndpoint";
  */
 export const useAvailableParticipants = () => {
   const endpoint = getQueryEndpoint("open");
+  const fetch = useFetch();
+
   return useQuery({
     queryKey: ["availableParticipants"],
     queryFn: async ({ signal }) => {
@@ -20,6 +23,7 @@ export const useAvailableParticipants = () => {
         CohortSummaryData,
         CohortSummaryVariables
       >({
+        fetch,
         endpoint,
         query: COHORT_SUMMARY_QUERY,
         variables: { filter: null },

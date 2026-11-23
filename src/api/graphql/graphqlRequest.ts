@@ -1,4 +1,7 @@
+import type { FetchFn } from "../../contexts/FetchContext";
+
 export interface GraphQLRequest<TVariables> {
+  fetch: FetchFn;
   endpoint: string;
   query: string;
   variables: TVariables;
@@ -22,6 +25,7 @@ export class HttpError extends Error {
 
 /** POSTs one GraphQL operation to `endpoint` and returns its `data`. */
 export const graphqlRequest = async <TData, TVariables extends object>({
+  fetch,
   endpoint,
   query,
   variables,

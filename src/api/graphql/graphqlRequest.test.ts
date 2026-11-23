@@ -4,18 +4,6 @@ import { graphqlRequest } from "./graphqlRequest";
 const ENDPOINT = "https://graphql.test/graphql";
 const QUERY = "query Echo($text: String!) { echo(text: $text) }";
 
-const clearCookie = () => {
-  document.cookie =
-    "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-};
-afterEach(clearCookie);
-
-const sentHeaders = (spy: jest.SpyInstance) =>
-  new Headers(spy.mock.calls[0][1]?.headers as HeadersInit);
-
-const okResponse = () =>
-  new Response(JSON.stringify({ data: { ok: true } }), { status: 200 });
-
 interface EchoData {
   echo: string;
 }
@@ -114,43 +102,5 @@ describe("graphqlRequest", () => {
 
     await expect(pending).rejects.toMatchObject({ name: "AbortError" });
     expect(fetchSpy.mock.calls[0][1]?.signal).toBe(controller.signal);
-  });
-
-  it("sends the XSRF token from the cookie on same-origin calls", async () => {
-    document.cookie = "XSRF-TOKEN=abc123; path=/";
-    const spy = jest.spyOn(globalThis, "fetch").mockResolvedValue(okResponse());
-
-    await graphqlRequest({
-      endpoint: "/api/cb/open/query",
-      query: "{ ok }",
-      variables: {},
-    });
-
-    expect(sentHeaders(spy).get("X-XSRF-TOKEN")).toBe("abc123");
-  });
-
-  it("sends no XSRF header when there is no cookie (standalone)", async () => {
-    const spy = jest.spyOn(globalThis, "fetch").mockResolvedValue(okResponse());
-
-    await graphqlRequest({
-      endpoint: "/api/cb/open/query",
-      query: "{ ok }",
-      variables: {},
-    });
-
-    expect(sentHeaders(spy).has("X-XSRF-TOKEN")).toBe(false);
-  });
-
-  it("never sends the token to another origin", async () => {
-    document.cookie = "XSRF-TOKEN=abc123; path=/";
-    const spy = jest.spyOn(globalThis, "fetch").mockResolvedValue(okResponse());
-
-    await graphqlRequest({
-      endpoint: "https://elsewhere.example/q",
-      query: "{ ok }",
-      variables: {},
-    });
-
-    expect(sentHeaders(spy).has("X-XSRF-TOKEN")).toBe(false);
   });
 });

@@ -1,3 +1,20 @@
+const XSRF_COOKIE = "XSRF-TOKEN";
+const XSRF_HEADER = "X-XSRF-TOKEN";
+
+const readCookie = (name: string): string | undefined => {
+  const entry = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${name}=`));
+  return entry ? decodeURIComponent(entry.slice(name.length + 1)) : undefined;
+};
+
+/** CSRF token for same-origin calls only, so it never leaks to another host. */
+const xsrfHeaders = (endpoint: string): Record<string, string> => {
+  if (new URL(endpoint, location.origin).origin !== location.origin) return {};
+  const token = readCookie(XSRF_COOKIE);
+  return token ? { [XSRF_HEADER]: token } : {};
+};
+
 export interface GraphQLRequest<TVariables> {
   endpoint: string;
   query: string;
@@ -29,7 +46,11 @@ export const graphqlRequest = async <TData, TVariables extends object>({
 }: GraphQLRequest<TVariables>): Promise<TData> => {
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...xsrfHeaders(endpoint),
+    },
     body: JSON.stringify({ query, variables }),
     signal,
   });

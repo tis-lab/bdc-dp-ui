@@ -5,13 +5,15 @@ import {
   useCohortSummary,
   type Criteria,
 } from "./useCohortSummary";
-import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
 import { COHORT_SUMMARY_QUERY } from "../api/graphql/queries/cohortSummary";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import {
   createWrapper,
   OPEN_ENDPOINT as ENDPOINT,
 } from "../test/createWrapper";
+import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
+import { legacyT2dSummary } from "../mocks/SYNTHETIC.legacyCohortSummary";
+import { cohortTotals } from "../utils/summary";
 
 let client: QueryClient;
 let wrapper: ReturnType<typeof createWrapper>["wrapper"];
@@ -96,8 +98,8 @@ describe("useCohortSummary", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("sends the summary query with an include filter, and returns the summary", async () => {
-    const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
+  it("sends the summary query with an include filter, and returns the class-first summary", async () => {
+    const fetchSpy = mockResponse({ data: { summary: legacyT2dSummary } });
 
     const { result } = renderHook(() => useCohortSummary(t2d), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -108,11 +110,18 @@ describe("useCohortSummary", () => {
       query: COHORT_SUMMARY_QUERY,
       variables: { filter: include("MONDO:0005148") },
     });
-    expect(result.current.data).toEqual(t2dSummary);
+    expect(result.current.data?.studies).toEqual(
+      t2dSummary.studies.map(({ research_study, participant_count }) =>
+        expect.objectContaining({ research_study, participant_count }),
+      ),
+    );
+    expect(cohortTotals(result.current.data!)).toEqual(
+      cohortTotals(t2dSummary),
+    );
   });
 
   it("sends a BDC concept's code", async () => {
-    const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
+    const fetchSpy = mockResponse({ data: { summary: legacyT2dSummary } });
 
     const { result } = renderHook(
       () =>
@@ -140,7 +149,7 @@ describe("useCohortSummary", () => {
   });
 
   it("sends included and excluded concepts in a stable order", async () => {
-    const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
+    const fetchSpy = mockResponse({ data: { summary: legacyT2dSummary } });
 
     const { result } = renderHook(
       () =>
@@ -185,7 +194,7 @@ describe("useCohortSummary", () => {
   });
 
   it("is loading again, without the previous summary, for a new selection", async () => {
-    mockResponse({ data: { summary: t2dSummary } });
+    mockResponse({ data: { summary: legacyT2dSummary } });
     const { result, rerender } = renderHook(
       ({ criteria }) => useCohortSummary(criteria),
       { wrapper, initialProps: { criteria: t2d } },
@@ -199,7 +208,7 @@ describe("useCohortSummary", () => {
   });
 
   it("asks again with OR when AND/OR changes", async () => {
-    const fetchSpy = mockResponse({ data: { summary: t2dSummary } });
+    const fetchSpy = mockResponse({ data: { summary: legacyT2dSummary } });
     const two: Criteria = {
       include: [term("MONDO:0005148"), term("HP:0000822")],
       exclude: [],
@@ -220,7 +229,7 @@ describe("useCohortSummary", () => {
   });
 
   it("keeps nothing once every criterion is removed", async () => {
-    mockResponse({ data: { summary: t2dSummary } });
+    mockResponse({ data: { summary: legacyT2dSummary } });
     const { result, rerender } = renderHook(
       ({ criteria }) => useCohortSummary(criteria),
       { wrapper, initialProps: { criteria: t2d } },

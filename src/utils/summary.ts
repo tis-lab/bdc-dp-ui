@@ -1,10 +1,11 @@
 import type {
-  DemographySummary,
+  DemographicSummary,
   SummaryResponse,
-} from "../api/graphql/queries/cohortSummary";
+  StudyCount,
+} from "../mocks/sampleSummaryResponse";
 import { enumToLabel } from "./text";
 
-export type DemographicSlot = DemographySummary["summarized_slot"];
+export type DemographicSlot = DemographicSummary["summarized_slot"];
 
 export interface CategoryCount {
   label: string;
@@ -25,8 +26,20 @@ export const SUMMED_TOTALS_NOTE =
 export const percentOf = (count: number, total: number): number =>
   total > 0 ? Math.round((count / total) * 100) : 0;
 
-const sumParticipants = (summary: SummaryResponse): number =>
-  summary.studies.reduce((sum, s) => sum + s.participant_count, 0);
+const sumCounts = (studies: StudyCount[]): number =>
+  studies.reduce((sum, s) => sum + s.participant_count, 0);
+
+/** Switching on the value's own summarized_slot lets TS narrow it. */
+const codesOf = (value: DemographicSummary["values"][number]): string[] => {
+  switch (value.summarized_slot) {
+    case "sex":
+      return [value.sex];
+    case "race":
+      return value.race;
+    case "ethnicity":
+      return [value.ethnicity];
+  }
+};
 
 /** Per-category counts summed across studies, largest first; remainder is "Not reported". */
 const sumBreakdown = (
@@ -34,32 +47,32 @@ const sumBreakdown = (
   slot: DemographicSlot,
   participants: number,
 ): CategoryCount[] => {
-  const counts = new Map<string, number>();
-  let reported = false;
+  const group = summary.summary.demographics.find(
+    (d) => d.summarized_slot === slot,
+  );
+  // No study reports this slot.
+  if (!group || group.studies.length === 0) return [];
 
-  for (const study of summary.studies) {
-    const group = study.demographics?.find((d) => d.summarized_slot === slot);
-    if (!group) continue;
-    reported = true;
-    for (const value of group.values ?? []) {
-      const codes = slot === "race" ? (value.race ?? []) : [value[slot] ?? ""];
-      const label = codes.filter(Boolean).map(enumToLabel).join(", ");
-      if (label) counts.set(label, (counts.get(label) ?? 0) + value.participant_count);
-    }
+  const counts = new Map<string, number>();
+  for (const value of group.values) {
+    const label = codesOf(value).filter(Boolean).map(enumToLabel).join(", ");
+    if (label)
+      counts.set(label, (counts.get(label) ?? 0) + sumCounts(value.studies));
   }
-  if (!reported) return [];
 
   const rows = [...counts]
     .map(([label, count]) => ({ label, count }))
     .sort((a, b) => b.count - a.count);
   const notReported = participants - rows.reduce((sum, r) => sum + r.count, 0);
 
-  return notReported > 0 ? [...rows, { label: "Not reported", count: notReported }] : rows;
+  return notReported > 0
+    ? [...rows, { label: "Not reported", count: notReported }]
+    : rows;
 };
 
 /** Temporary: sums per-study counts until the endpoint returns global totals. */
 export const cohortTotals = (summary: SummaryResponse): CohortTotals => {
-  const participants = sumParticipants(summary);
+  const participants = sumCounts(summary.studies);
   return {
     participants,
     studies: summary.studies.length,

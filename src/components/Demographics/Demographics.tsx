@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from "react";
 import { Alert, Tab, Tabs, Typography, useTheme } from "@mui/material";
 import ReactEChartsCore from "echarts-for-react/lib/core";
-import type { SummaryResponse } from "../../api/graphql/queries/cohortSummary";
+import type { SummaryResponse } from "../../mocks/sampleSummaryResponse";
 import { ECHARTS_FILL, echarts } from "../../charts";
 import {
   cohortTotals,

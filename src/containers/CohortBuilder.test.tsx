@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CohortBuilder from "./CohortBuilder";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
-import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
+import { legacyT2dSummary } from "../mocks/SYNTHETIC.legacyCohortSummary";
 import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
 import type { Criteria, CriteriaKind } from "../hooks/useCohortSummary";
 import {
@@ -30,7 +30,7 @@ const summaryFor = (filter: Record<string, unknown> | null) =>
       ? studiesOf(250, 200)
       : "or" in filter
         ? studiesOf(600, 600)
-        : t2dSummary;
+        : legacyT2dSummary;
 
 const mockHypertension: SearchItem = {
   __typename: "Term",

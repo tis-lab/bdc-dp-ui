@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { Container, Divider } from "@mui/material";
+import { useCallback, useId, useState } from "react";
+import { Divider, Tab, Tabs } from "@mui/material";
 import ConceptSearch from "../components/ConceptSearch";
 import CohortCriteria from "../components/CohortCriteria";
 import CohortSnapshot from "../components/CohortSnapshot";
@@ -16,6 +16,10 @@ import {
   type SearchItem,
 } from "../api/graphql/queries/resolveTerms";
 import { CohortBuilderLayout, Column, Overview } from "./CohortBuilder.styles";
+import PageHeader from "../components/PageHeader/PageHeader";
+import { PageContainer } from "../components/PageContainer/PageContainer.styles";
+import TabPanel, { tabProps } from "../components/TabPanel/TabPanel";
+import { TabLayout } from "../components/TabLayout/TabLayout.styles";
 
 // ----------------------------------------------------------------------
 
@@ -33,11 +37,15 @@ const addTo =
   });
 
 export default function CohortBuilder() {
+  const titleId = useId();
+  const tabId = useId();
+  const [tab, setTab] = useState("concept");
   const [criteria, setCriteria] = useState<Criteria>({
     include: [],
     exclude: [],
     match: "all",
   });
+
   const availableTotal = useAvailableParticipants();
   const filteredSummary = useCohortSummary(criteria);
 
@@ -60,37 +68,57 @@ export default function CohortBuilder() {
   );
 
   return (
-    <Container maxWidth="lg">
-      <CohortBuilderLayout>
-        <Column>
-          <ConceptSearch
-            onInclude={handleInclude}
-            onExclude={handleExclude}
-            criteria={criteria}
-            onRemove={remove}
-          />
-          <CohortCriteria
-            criteria={criteria}
-            onRemove={remove}
-            onMatchChange={handleMatchChange}
-          />
-        </Column>
+    <PageContainer>
+      <PageHeader
+        id={titleId}
+        title="Build a Cohort"
+        subtitle="Search for concepts or start from an existing cohort definition"
+      />
+      <TabLayout>
+        <Tabs
+          value={tab}
+          onChange={(_, v: string) => setTab(v)}
+          aria-labelledby={titleId}
+        >
+          <Tab label="Search Concepts" {...tabProps(tabId, "concept")} />
+          {/* <Tab
+            label="Existing Definitions"
+            {...tabProps(tabId, "definitions")}
+          /> */}
+        </Tabs>
+      </TabLayout>
+      <TabPanel tabId={tabId} value="concept" current={tab}>
+        <CohortBuilderLayout>
+          <Column>
+            <ConceptSearch
+              onInclude={handleInclude}
+              onExclude={handleExclude}
+              criteria={criteria}
+              onRemove={remove}
+            />
+            <CohortCriteria
+              criteria={criteria}
+              onRemove={remove}
+              onMatchChange={handleMatchChange}
+            />
+          </Column>
 
-        <Overview aria-label="Cohort overview">
-          <CohortSnapshot
-            filteredSummary={filteredSummary.data}
-            availableTotal={availableTotal.data ?? null}
-            isLoading={availableTotal.isLoading || filteredSummary.isLoading}
-            error={availableTotal.error ?? filteredSummary.error}
-          />
-          <Divider />
-          <Demographics
-            filteredSummary={filteredSummary.data}
-            isLoading={filteredSummary.isLoading}
-            error={filteredSummary.error}
-          />
-        </Overview>
-      </CohortBuilderLayout>
-    </Container>
+          <Overview aria-label="Cohort overview">
+            <CohortSnapshot
+              filteredSummary={filteredSummary.data}
+              availableTotal={availableTotal.data ?? null}
+              isLoading={availableTotal.isLoading || filteredSummary.isLoading}
+              error={availableTotal.error ?? filteredSummary.error}
+            />
+            <Divider />
+            <Demographics
+              filteredSummary={filteredSummary.data}
+              isLoading={filteredSummary.isLoading}
+              error={filteredSummary.error}
+            />
+          </Overview>
+        </CohortBuilderLayout>
+      </TabPanel>
+    </PageContainer>
   );
 }

@@ -1,11 +1,7 @@
 // SYNTHETIC: illustrative counts for two fictional studies, not derived from
 // participant data. Class-first copies of schema/examples/SYNTHETIC.SummaryResponse-*.yaml,
 // used only as fixed responses in tests; the app reads the summary API.
-
-import { SummaryResponse } from "./sampleSummaryResponse";
-
-// TODO: add this line back when updated cohortsummary endpoint is ready, and remove the one above
-// import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
+import type { SummaryResponse } from "./sampleSummaryResponse";
 
 /** Converted in full from schema/examples/SYNTHETIC.SummaryResponse-overview.yaml. */
 export const overviewSummary: SummaryResponse = {

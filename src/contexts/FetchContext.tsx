@@ -4,10 +4,13 @@ import { createContext, useContext } from "react";
  * import { csrfFetch } from "@nhlbi/bdcp-frontend"
  */
 
-export type FetchFn = (
-  input: RequestInfo | URL,
-  init?: RequestInit,
-) => Promise<Response>;
+export interface ApiRequestInit {
+  method: "POST";
+  headers: Record<string, string>;
+  body: string;
+  signal?: AbortSignal;
+}
+export type FetchFn = (url: string, init: ApiRequestInit) => Promise<Response>;
 
 export const browserFetch: FetchFn = (input, init) => fetch(input, init);
 

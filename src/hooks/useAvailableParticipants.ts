@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
-import {
-  COHORT_SUMMARY_QUERY,
-  type CohortSummaryData,
-  type CohortSummaryVariables,
-} from "../api/graphql/queries/cohortSummary";
 import { getQueryEndpoint } from "../api/queryEndpoint";
+import {
+  AVAILABLE_PARTICIPANTS_QUERY,
+  AvailableParticipantsData,
+  RELEASE,
+  type CohortSummaryVariables,
+} from "../mocks/sampleSummaryResponse";
 
 /**
  * Participants available, from pageLoadSnapshot. Fetched once per session.
@@ -14,15 +15,15 @@ import { getQueryEndpoint } from "../api/queryEndpoint";
 export const useAvailableParticipants = () => {
   const endpoint = getQueryEndpoint("open");
   return useQuery({
-    queryKey: ["availableParticipants"],
+    queryKey: ["availableParticipants", RELEASE],
     queryFn: async ({ signal }) => {
       const data = await graphqlRequest<
-        CohortSummaryData,
+        AvailableParticipantsData,
         CohortSummaryVariables
       >({
         endpoint,
-        query: COHORT_SUMMARY_QUERY,
-        variables: { filter: null },
+        query: AVAILABLE_PARTICIPANTS_QUERY,
+        variables: { expression: { release: RELEASE } },
         signal,
       });
       const studies = data?.summary?.studies;

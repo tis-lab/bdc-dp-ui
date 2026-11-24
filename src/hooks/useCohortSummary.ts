@@ -1,14 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { graphqlRequest } from "../api/graphql/graphqlRequest";
-import type { SearchItem } from "../api/graphql/queries/resolveTerms";
 import {
-  COHORT_SUMMARY_QUERY,
-  type CohortSummaryData,
-  type CohortSummaryVariables,
-  type SummaryFilter,
-} from "../api/graphql/queries/cohortSummary";
+  getSearchItemKey,
+  type SearchItem,
+} from "../api/graphql/queries/resolveTerms";
+import { type CohortSummaryData } from "../api/graphql/queries/cohortSummary";
 import { getQueryEndpoint } from "../api/queryEndpoint";
 import { toClassFirst } from "../mocks/toClassFirst";
+import {
+  NESTED_SUMMARY_QUERY,
+  RELEASE,
+  type CohortExpression,
+  type CohortSummaryVariables,
+  type ConditionStatus,
+  type CriteriaGroup,
+  type CriteriaNode,
+  type CriterionType,
+} from "../mocks/sampleSummaryResponse";
 
 export type CriteriaKind = "include" | "exclude";
 
@@ -21,67 +29,94 @@ export interface Criteria {
   match: CriteriaMatch;
 }
 
+export const CRITERION_TYPE_BY_BDCHM: Record<string, CriterionType> = {
+  condition: "CONDITION",
+  observation: "OBSERVATION",
+  drugexposure: "DRUG_EXPOSURE",
+  procedure: "PROCEDURE",
+  exposure: "EXPOSURE",
+};
+
+const INCLUDE_STATUS: ConditionStatus[] = ["PRESENT"];
+const EXCLUDE_STATUS: ConditionStatus[] = ["PRESENT", "HISTORICAL"];
+
 const conceptOf = (item: SearchItem) =>
   item.__typename === "Term" ? item.id : item.conceptType;
 
-/** Groups two or more nodes; returns one node as-is, null for none. */
-const group = (
-  op: "and" | "or",
-  nodes: SummaryFilter[],
-): SummaryFilter | null => {
-  if (nodes.length === 0) return null;
-  if (nodes.length === 1) return nodes[0];
-  return op === "and" ? { and: nodes } : { or: nodes };
+/** null for Terms and untyped concepts; those are not queryable yet. */
+export const criterionTypeOf = (item: SearchItem): CriterionType | null =>
+  item.__typename === "BdcConcept" && item.bdchmType
+    ? (CRITERION_TYPE_BY_BDCHM[item.bdchmType] ?? null)
+    : null;
+
+/** Status is condition-only. */
+const node = (
+  item: SearchItem,
+  status: ConditionStatus[],
+): CriteriaNode | null => {
+  const criterionType = criterionTypeOf(item);
+  if (!criterionType) return null;
+  const concept = conceptOf(item);
+  return {
+    criterion:
+      criterionType === "CONDITION"
+        ? { criterionType, concept, status }
+        : { criterionType, concept },
+  };
 };
 
-/** Includes combined by `match`, excludes ANDed; null when empty. */
-export const summaryFilter = (
-  include: string[],
-  exclude: string[],
+const isNode = (n: CriteriaNode | null): n is CriteriaNode => n !== null;
+
+const byKey = (a: SearchItem, b: SearchItem) =>
+  getSearchItemKey(a).localeCompare(getSearchItemKey(b));
+
+/** Includes under `match` ("all" | "any"), excludes under "none"; null when empty. */
+export const buildExpression = (
+  include: SearchItem[],
+  exclude: SearchItem[],
   match: CriteriaMatch,
-): SummaryFilter | null => {
-  const included = group(
-    match === "any" ? "or" : "and",
-    include.map(
-      (concept): SummaryFilter => ({
-        condition: { concept, selection: "INCLUDE" },
-      }),
-    ),
-  );
-  return group("and", [
-    ...(included ? [included] : []),
-    ...exclude.map(
-      (concept): SummaryFilter => ({
-        condition: { concept, selection: "EXCLUDE" },
-      }),
-    ),
-  ]);
+): CohortExpression | null => {
+  const inc = [...include]
+    .sort(byKey)
+    .map((i) => node(i, INCLUDE_STATUS))
+    .filter(isNode);
+  const exc = [...exclude]
+    .sort(byKey)
+    .map((i) => node(i, EXCLUDE_STATUS))
+    .filter(isNode);
+  if (!inc.length && !exc.length) return null;
+
+  const root: CriteriaGroup = {};
+  if (inc.length) root[match] = inc;
+  if (exc.length) root.none = exc;
+  return { release: RELEASE, criteria: { group: root } };
 };
 
-/** Disabled until at least one concept is included or excluded. */
+/** Disabled until at least one queryable concept is included or excluded. */
 export const useCohortSummary = (criteria: Criteria) => {
   const endpoint = getQueryEndpoint("open");
-
-  const include = criteria.include.map(conceptOf).sort();
-  const exclude = criteria.exclude.map(conceptOf).sort();
-  const filter = summaryFilter(include, exclude, criteria.match);
+  const expression = buildExpression(
+    criteria.include,
+    criteria.exclude,
+    criteria.match,
+  );
 
   return useQuery({
-    queryKey: ["cohortSummary", filter],
+    queryKey: ["cohortSummary", expression],
     queryFn: async ({ signal }) => {
       const data = await graphqlRequest<
         CohortSummaryData,
         CohortSummaryVariables
       >({
         endpoint,
-        query: COHORT_SUMMARY_QUERY,
-        variables: { filter },
+        query: NESTED_SUMMARY_QUERY,
+        variables: { expression: expression! },
         signal,
       });
       if (!data?.summary) throw new Error("Missing summary response");
-      // TODO: remove toClassFirst after new endpoint is ready
+      // TODO: replace with new response mapping
       return toClassFirst(data.summary, data.summary.min_count);
     },
-    enabled: filter !== null,
+    enabled: expression !== null,
   });
 };

@@ -7,9 +7,12 @@ import type {
 const SLOTS = ["sex", "race", "ethnicity"] as const;
 
 /** Temporary: delete when the endpoint returns the new shape. */
-export const toClassFirst = (legacy: Legacy): SummaryResponse => ({
+export const toClassFirst = (
+  legacy: Legacy,
+  minCount: number,
+): SummaryResponse => ({
   release: "",
-  min_count: 0,
+  min_count: minCount,
   terms: {},
   research_studies: [],
   studies: legacy.studies.map((s) => ({

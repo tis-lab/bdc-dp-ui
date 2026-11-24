@@ -80,7 +80,7 @@ export const useCohortSummary = (criteria: Criteria) => {
       });
       if (!data?.summary) throw new Error("Missing summary response");
       // TODO: remove toClassFirst after new endpoint is ready
-      return toClassFirst(data.summary);
+      return toClassFirst(data.summary, data.summary.min_count);
     },
     enabled: filter !== null,
   });

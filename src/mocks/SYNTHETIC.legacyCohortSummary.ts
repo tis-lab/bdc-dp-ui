@@ -5,6 +5,8 @@ import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
 
 /** Trimmed from schema/examples/SYNTHETIC.SummaryResponse-t2d.yaml. */
 export const legacyT2dSummary: SummaryResponse = {
+  release: "example-release",
+  min_count: 10,
   studies: [
     {
       research_study: "palette:study_one",
@@ -145,6 +147,8 @@ export const legacyT2dSummary: SummaryResponse = {
 
 /** Trimmed from schema/examples/SYNTHETIC.SummaryResponse-t2d-female.yaml. */
 export const legacyT2dFemaleSummary: SummaryResponse = {
+  release: "example-release",
+  min_count: 10,
   studies: [
     {
       research_study: "palette:study_one",

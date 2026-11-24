@@ -48,7 +48,9 @@ import theme from "./theme/MuiTheme";
 import { muiTheme as theme } from "@nhlbi/bdcp-frontend";
 ```
 
-### 3. Review root-level files individually
+### 3. Update `FetchContext.tsx` and `Root.tsx` to use CSRF Fetch function from the shared library
+
+### 4. Review root-level files individually
 
 Files at the repository root must be checked on its own and given one of three decisions:
 

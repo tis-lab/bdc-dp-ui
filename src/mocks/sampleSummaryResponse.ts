@@ -51,9 +51,8 @@ export interface Bin {
 /** One summarized class (a slot, condition or measurement) and its values. */
 export interface ClassSummary<V> {
   id: Curie;
-  studies?: StudyCount[];
-  values?: V[];
-  record_count?: number;
+  studies: StudyCount[];
+  values: V[];
 }
 
 // ---------- Study metadata ----------
@@ -67,7 +66,7 @@ export interface ResearchStudy {
 }
 
 export interface StudyTotal extends StudyCount {
-  name?: string;
+  name: string;
 }
 
 // ---------- Vocabulary ----------
@@ -194,8 +193,8 @@ export interface MeasurementSummary extends ClassSummary<MeasurementValue> {
 // ---------- Response ----------
 
 export interface Summary {
-  participants?: ParticipantSummary[];
-  demographics?: DemographicSummary[];
+  participants: ParticipantSummary[];
+  demographics: DemographicSummary[];
   conditions?: ConditionSummary[];
   measurements?: MeasurementSummary[];
 }
@@ -215,6 +214,7 @@ export interface SummaryResponse {
   studies: StudyTotal[];
   records?: Records;
   summary: Summary;
-  seed?: string;
-  suppressed_study_count?: number;
 }
+
+/** One demographic value of any slot: SexValue | RaceValue | EthnicityValue. */
+export type DemographicValue = DemographicSummary["values"][number];

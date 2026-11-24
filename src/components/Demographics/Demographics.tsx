@@ -7,6 +7,7 @@ import {
   cohortTotals,
   percentOf,
   SUMMED_TOTALS_NOTE,
+  type CategoryCount,
   type CohortTotals,
   type DemographicSlot,
 } from "../../utils/summary";
@@ -33,6 +34,10 @@ export interface Props {
 
 const BAR_THICKNESS = 10;
 const SKELETON_BARS = 3;
+
+type CountedRow = CategoryCount & { count: number };
+
+const isCounted = (row: CategoryCount): row is CountedRow => row.count !== null;
 
 // ----------------------------------------------------------------------
 
@@ -85,6 +90,16 @@ const Breakdown = ({ totals }: { totals: CohortTotals }) => {
   const total = totals.participants;
   const rows = totals.demographics[slot];
 
+  // Suppressed rows (count: null) have no number to chart; they're listed as text
+  // below the chart so nothing ever renders "null", 0 or a percentage for them.
+  const { counted, suppressed } = useMemo(
+    () => ({
+      counted: rows.filter(isCounted),
+      suppressed: rows.filter((r) => !isCounted(r)),
+    }),
+    [rows],
+  );
+
   const bars = useMemo(
     () => ({
       aria: { enabled: true },
@@ -98,7 +113,7 @@ const Breakdown = ({ totals }: { totals: CohortTotals }) => {
       yAxis: {
         type: "category",
         inverse: true,
-        data: rows.map((r) => r.label),
+        data: counted.map((r) => r.label),
         axisLine: { show: false },
         axisTick: { show: false },
       },
@@ -122,11 +137,11 @@ const Breakdown = ({ totals }: { totals: CohortTotals }) => {
             formatter: ({ value }: { value: number }) =>
               `${value.toLocaleString()} · ${percentOf(value, total)}%`,
           },
-          data: rows.map((r) => ({ name: r.label, value: r.count })),
+          data: counted.map((r) => ({ name: r.label, value: r.count })),
         },
       ],
     }),
-    [rows, total, theme],
+    [counted, total, theme],
   );
 
   return (
@@ -141,15 +156,23 @@ const Breakdown = ({ totals }: { totals: CohortTotals }) => {
         ))}
       </Tabs>
 
-      {rows.length > 0 ? (
-        <BarArea rows={rows.length}>
+      {counted.length > 0 && (
+        <BarArea rows={counted.length}>
           <ReactEChartsCore
             echarts={echarts}
             option={bars}
             style={ECHARTS_FILL}
           />
         </BarArea>
-      ) : (
+      )}
+
+      {suppressed.map((r) => (
+        <Typography key={r.label} variant="body2" color="text.secondary">
+          {r.label}
+        </Typography>
+      ))}
+
+      {rows.length === 0 && (
         <Typography variant="body2" color="text.secondary">
           Not reported for this cohort.
         </Typography>
@@ -157,7 +180,7 @@ const Breakdown = ({ totals }: { totals: CohortTotals }) => {
 
       <Typography variant="caption" color="text.secondary">
         {SUMMED_TOTALS_NOTE} Categories may not total 100% when values are not
-        reported.
+        reported or fall below the reporting threshold.
       </Typography>
     </>
   );

@@ -6,10 +6,24 @@ import {
   legacyT2dSummary,
 } from "./SYNTHETIC.legacyCohortSummary";
 
+/** Fails the test with a clear message instead of a later "cannot read properties of undefined". */
+const required = <T>(value: T | undefined, what: string): T => {
+  if (value === undefined) throw new Error(`toClassFirst dropped ${what}`);
+  return value;
+};
+
+// Take thresholds from the class-first fixtures so the adapter can't drift from them.
+const t2d = () => toClassFirst(legacyT2dSummary, t2dSummary.min_count);
+const t2dFemale = () =>
+  toClassFirst(legacyT2dFemaleSummary, t2dFemaleSummary.min_count);
+
+const demographicsOf = (summary: ReturnType<typeof toClassFirst>) =>
+  required(summary.summary.demographics, "demographics");
+
 // TODO: delete with toClassFirst once the endpoint returns the class-first shape.
 describe("toClassFirst", () => {
   it("keeps each study's total", () => {
-    expect(toClassFirst(legacyT2dSummary).studies).toEqual([
+    expect(t2d().studies).toEqual([
       expect.objectContaining({
         research_study: "palette:study_one",
         participant_count: 480,
@@ -21,10 +35,13 @@ describe("toClassFirst", () => {
     ]);
   });
 
+  it("uses the given min_count rather than inventing one", () => {
+    expect(t2d().min_count).toBe(t2dSummary.min_count);
+    expect(toClassFirst(legacyT2dSummary, 25).min_count).toBe(25);
+  });
+
   it("groups per-study demographics into one entry per slot", () => {
-    const sex = toClassFirst(legacyT2dSummary).summary.demographics.find(
-      (d) => d.summarized_slot === "sex",
-    );
+    const sex = demographicsOf(t2d()).find((d) => d.summarized_slot === "sex");
 
     expect(sex?.studies).toEqual([
       { research_study: "palette:study_one", participant_count: 480 },
@@ -42,7 +59,7 @@ describe("toClassFirst", () => {
   });
 
   it("keeps a value reported by only one study", () => {
-    const race = toClassFirst(legacyT2dSummary).summary.demographics.find(
+    const race = demographicsOf(t2d()).find(
       (d) => d.summarized_slot === "race",
     );
 
@@ -55,19 +72,13 @@ describe("toClassFirst", () => {
   });
 
   it("omits a slot that no study reports", () => {
-    const slots = toClassFirst(legacyT2dFemaleSummary).summary.demographics.map(
-      (d) => d.summarized_slot,
-    );
+    const slots = demographicsOf(t2dFemale()).map((d) => d.summarized_slot);
 
     expect(slots).toEqual(["sex", "race"]);
   });
 
   it("gives the same totals as the class-first fixtures", () => {
-    expect(cohortTotals(toClassFirst(legacyT2dSummary))).toEqual(
-      cohortTotals(t2dSummary),
-    );
-    expect(cohortTotals(toClassFirst(legacyT2dFemaleSummary))).toEqual(
-      cohortTotals(t2dFemaleSummary),
-    );
+    expect(cohortTotals(t2d())).toEqual(cohortTotals(t2dSummary));
+    expect(cohortTotals(t2dFemale())).toEqual(cohortTotals(t2dFemaleSummary));
   });
 });

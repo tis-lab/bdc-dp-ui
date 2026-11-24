@@ -6,9 +6,11 @@ import {
   type AutocompleteVariables,
 } from "../api/graphql/queries/autocomplete";
 import { getQueryEndpoint } from "../api/queryEndpoint";
+import { useFetch } from "../contexts/FetchContext";
 
 export const useConceptSuggestions = (searchText: string) => {
   const endpoint = getQueryEndpoint("open");
+  const fetch = useFetch();
 
   const query = searchText.trim();
 
@@ -19,6 +21,7 @@ export const useConceptSuggestions = (searchText: string) => {
         AutocompleteData,
         AutocompleteVariables
       >({
+        fetch,
         endpoint,
         query: AUTOCOMPLETE_QUERY,
         variables: { query },

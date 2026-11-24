@@ -13,6 +13,8 @@ import {
 const AVAILABLE = "2,000";
 
 const studiesOf = (...counts: number[]): SummaryResponse => ({
+  release: legacyT2dSummary.release,
+  min_count: legacyT2dSummary.min_count,
   studies: counts.map((participant_count, i) => ({
     research_study: `study_${i}`,
     participant_count,

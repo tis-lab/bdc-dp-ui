@@ -22,12 +22,21 @@ describe("percentOf", () => {
 });
 
 describe("cohortTotals demographics", () => {
-  it("sums sex across studies, with the remainder as not reported", () => {
+  it("sums sex across studies, flagging suppressed values without a count", () => {
     expect(cohortTotals(t2dSummary).demographics.sex).toEqual([
       { label: "Female", count: 480 },
       { label: "Male", count: 450 },
-      { label: "Not reported", count: 10 },
+      { label: "Other (fewer than 10 per study, not shown)", count: null },
     ]);
+  });
+
+  it("never shows a count that would reveal suppressed values", () => {
+    const shown = cohortTotals(t2dSummary).demographics.sex.reduce(
+      (sum, r) => sum + (r.count ?? 0),
+      0,
+    );
+    // 940 would mean the hidden 10 had been added back as a number.
+    expect(shown).toBe(930);
   });
 
   it("orders race categories largest first, not reported last", () => {

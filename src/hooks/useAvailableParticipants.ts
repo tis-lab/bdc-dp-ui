@@ -7,6 +7,7 @@ import {
   RELEASE,
   type CohortSummaryVariables,
 } from "../mocks/sampleSummaryResponse";
+import { useFetch } from "../contexts/FetchContext";
 
 /**
  * Participants available, from pageLoadSnapshot. Fetched once per session.
@@ -14,6 +15,8 @@ import {
  */
 export const useAvailableParticipants = () => {
   const endpoint = getQueryEndpoint("open");
+  const fetch = useFetch();
+
   return useQuery({
     queryKey: ["availableParticipants", RELEASE],
     queryFn: async ({ signal }) => {
@@ -21,6 +24,7 @@ export const useAvailableParticipants = () => {
         AvailableParticipantsData,
         CohortSummaryVariables
       >({
+        fetch,
         endpoint,
         query: AVAILABLE_PARTICIPANTS_QUERY,
         variables: { expression: { release: RELEASE } },

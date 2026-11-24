@@ -16,12 +16,13 @@ import "@fontsource/public-sans/700.css";
 import "@fontsource/merriweather/400.css";
 import "@fontsource/merriweather/600.css";
 import "@fontsource/merriweather/700.css";
+import { browserFetch } from "./contexts/FetchContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <Root />
+        <Root fetch={browserFetch} />
       </BrowserRouter>
     </ThemeProvider>
   </StrictMode>,

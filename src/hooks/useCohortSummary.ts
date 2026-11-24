@@ -17,6 +17,7 @@ import {
   type CriteriaNode,
   type CriterionType,
 } from "../mocks/sampleSummaryResponse";
+import { useFetch } from "../contexts/FetchContext";
 
 export type CriteriaKind = "include" | "exclude";
 
@@ -95,6 +96,7 @@ export const buildExpression = (
 /** Disabled until at least one queryable concept is included or excluded. */
 export const useCohortSummary = (criteria: Criteria) => {
   const endpoint = getQueryEndpoint("open");
+  const fetch = useFetch();
   const expression = buildExpression(
     criteria.include,
     criteria.exclude,
@@ -108,6 +110,7 @@ export const useCohortSummary = (criteria: Criteria) => {
         CohortSummaryData,
         CohortSummaryVariables
       >({
+        fetch,
         endpoint,
         query: NESTED_SUMMARY_QUERY,
         variables: { expression: expression! },

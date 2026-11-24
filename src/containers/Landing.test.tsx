@@ -11,6 +11,7 @@ import {
   useNavigate,
 } from "react-router";
 import Landing from "./Landing";
+import { createWrapper } from "../test/createWrapper";
 
 // ----------------------------------------------------------------------
 
@@ -65,15 +66,18 @@ function BuilderProbe() {
 }
 
 function renderApp(ui: ReactNode = <Landing />) {
+  const { wrapper: ApiWrapper } = createWrapper();
   return render(
-    <ThemeProvider theme={theme}>
-      <MemoryRouter initialEntries={["/"]}>
-        <Routes>
-          <Route path="/" element={ui} />
-          <Route path="/build" element={<BuilderProbe />} />
-        </Routes>
-      </MemoryRouter>
-    </ThemeProvider>,
+    <ApiWrapper>
+      <ThemeProvider theme={theme}>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route path="/" element={ui} />
+            <Route path="/build" element={<BuilderProbe />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>
+    </ApiWrapper>,
   );
 }
 

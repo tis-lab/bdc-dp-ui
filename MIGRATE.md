@@ -10,12 +10,13 @@ Every part of the repository falls into one of three groups:
 2. **Never migrate:** the folders listed in the table below.
 3. **Review individually:** every file at the repository root. Each one is either migrated entirely, partially merged into the target's existing version, or not migrated. (See step 3.)
 
-| Never migrate | Why it is excluded                                                                                                                                                   |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/`    | CI workflows are tied to the current environment.                                                                                                                    |
-| `docker/`     | Container definitions, images, and volumes are built for the current infrastructure.                                                                                 |
-| `httpd/`      | Apache web server configuration is specific to the current host.                                                                                                     |
-| `src/theme`   | MThe local MUI theme is only for checking styling in the current environment. The target environment uses the shared theme from `@nhlbi/bdcp-frontend` (see step 2). |
+| Never migrate       | Why it is excluded                                                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/`          | CI workflows are tied to the current environment.                                                                                                                    |
+| `docker/`           | Container definitions, images, and volumes are built for the current infrastructure.                                                                                 |
+| `httpd/`            | Apache web server configuration is specific to the current host.                                                                                                     |
+| `src/theme`         | MThe local MUI theme is only for checking styling in the current environment. The target environment uses the shared theme from `@nhlbi/bdcp-frontend` (see step 2). |
+| `package-lock.json` | Because the environments are different, the lock file will break the target environment if migrated                                                                  |
 
 The target environment is expected to provide its own equivalents of these.
 
@@ -47,7 +48,9 @@ import theme from "./theme/MuiTheme";
 import { muiTheme as theme } from "@nhlbi/bdcp-frontend";
 ```
 
-### 3. Review root-level files individually
+### 3. Update `FetchContext.tsx` and `Root.tsx` to use CSRF Fetch function from the shared library
+
+### 4. Review root-level files individually
 
 Files at the repository root must be checked on its own and given one of three decisions:
 

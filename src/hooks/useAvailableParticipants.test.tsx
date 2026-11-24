@@ -1,18 +1,15 @@
-import type { ReactNode } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { useAvailableParticipants } from "./useAvailableParticipants";
-import { PAGE_LOAD_SNAPSHOT_QUERY } from "../api/graphql/queries/pageLoadSnapshot";
+import { COHORT_SUMMARY_QUERY } from "../api/graphql/queries/cohortSummary";
+import { createWrapper } from "../test/createWrapper";
 
-const ENDPOINT = "https://graphql.test/graphql";
-const ORIGINAL_ENV = process.env;
-
-const wrapper = ({ children }: { children: ReactNode }) => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-};
+let client: QueryClient;
+let wrapper: ReturnType<typeof createWrapper>["wrapper"];
+beforeEach(() => {
+  ({ client, wrapper } = createWrapper());
+});
+afterEach(() => client.clear());
 
 const mockResponse = (body: unknown) =>
   jest
@@ -21,36 +18,39 @@ const mockResponse = (body: unknown) =>
       async () => new Response(JSON.stringify(body), { status: 200 }),
     );
 
-const snapshot = (value: number | null, suppressed = false) => ({
-  data: { pageLoadSnapshot: { participantCount: { value, suppressed } } },
+const summaryOf = (...counts: number[]) => ({
+  data: {
+    summary: {
+      studies: counts.map((participant_count, i) => ({
+        research_study: `study_${i}`,
+        participant_count,
+      })),
+    },
+  },
 });
 
 describe("useAvailableParticipants", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
-    process.env = { ...ORIGINAL_ENV, VITE_GRAPHQL_URL: ENDPOINT };
   });
 
-  afterEach(() => {
-    process.env = ORIGINAL_ENV;
-  });
-
-  it("sends pageLoadSnapshot and returns its participant count", async () => {
-    const fetchSpy = mockResponse(snapshot(1000));
+  it("sends the unfiltered summary and returns the sum of study counts", async () => {
+    const fetchSpy = mockResponse(summaryOf(1200, 1050));
 
     const { result } = renderHook(() => useAvailableParticipants(), {
       wrapper,
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data).toBe(1000);
-    expect(
-      JSON.parse(fetchSpy.mock.calls[0][1]?.body as string),
-    ).toEqual({ query: PAGE_LOAD_SNAPSHOT_QUERY, variables: {} });
+    expect(result.current.data).toBe(2250);
+    expect(JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)).toEqual({
+      query: COHORT_SUMMARY_QUERY,
+      variables: { filter: null },
+    });
   });
 
-  it("returns null, not 0, when the count is suppressed", async () => {
-    mockResponse(snapshot(null, true));
+  it("returns null, not 0, when there are no studies", async () => {
+    mockResponse(summaryOf());
 
     const { result } = renderHook(() => useAvailableParticipants(), {
       wrapper,
@@ -60,8 +60,8 @@ describe("useAvailableParticipants", () => {
     expect(result.current.data).toBeNull();
   });
 
-  it("returns null when the snapshot is missing", async () => {
-    mockResponse({ data: { pageLoadSnapshot: null } });
+  it("returns null when the summary is missing", async () => {
+    mockResponse({ data: { summary: null } });
 
     const { result } = renderHook(() => useAvailableParticipants(), {
       wrapper,

@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import {
   summaryFilter,
   useCohortSummary,
@@ -9,9 +8,17 @@ import {
 import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
 import { COHORT_SUMMARY_QUERY } from "../api/graphql/queries/cohortSummary";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
+import {
+  createWrapper,
+  OPEN_ENDPOINT as ENDPOINT,
+} from "../test/createWrapper";
 
-const ENDPOINT = "https://graphql.test/graphql";
-const ORIGINAL_ENV = process.env;
+let client: QueryClient;
+let wrapper: ReturnType<typeof createWrapper>["wrapper"];
+beforeEach(() => {
+  ({ client, wrapper } = createWrapper());
+});
+afterEach(() => client.clear());
 
 const term = (id: string): SearchItem => ({
   __typename: "Term",
@@ -36,13 +43,6 @@ const include = (concept: string) => ({
 const exclude = (concept: string) => ({
   condition: { concept, selection: "EXCLUDE" },
 });
-
-const wrapper = ({ children }: { children: ReactNode }) => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-};
 
 const mockResponse = (body: unknown) =>
   jest
@@ -86,11 +86,6 @@ describe("summaryFilter", () => {
 describe("useCohortSummary", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
-    process.env = { ...ORIGINAL_ENV, VITE_GRAPHQL_URL: ENDPOINT };
-  });
-
-  afterEach(() => {
-    process.env = ORIGINAL_ENV;
   });
 
   it("does not run without criteria", () => {

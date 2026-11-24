@@ -1,5 +1,6 @@
 import type {
   DemographicSummary,
+  DemographicValue,
   SummaryResponse,
   StudyCount,
 } from "../mocks/sampleSummaryResponse";
@@ -9,7 +10,8 @@ export type DemographicSlot = DemographicSummary["summarized_slot"];
 
 export interface CategoryCount {
   label: string;
-  count: number;
+  /** null = some values fell below min_count and are not shown; never display a number. */
+  count: number | null;
 }
 
 export interface CohortTotals {
@@ -30,7 +32,7 @@ const sumCounts = (studies: StudyCount[]): number =>
   studies.reduce((sum, s) => sum + s.participant_count, 0);
 
 /** Switching on the value's own summarized_slot lets TS narrow it. */
-const codesOf = (value: DemographicSummary["values"][number]): string[] => {
+const codesOf = (value: DemographicValue): string[] => {
   switch (value.summarized_slot) {
     case "sex":
       return [value.sex];
@@ -41,7 +43,11 @@ const codesOf = (value: DemographicSummary["values"][number]): string[] => {
   }
 };
 
-/** Per-category counts summed across studies, largest first; remainder is "Not reported". */
+/**
+ * Per-category counts summed across studies, largest first.
+ * "Not reported" = participants with no value for this slot (cohort minus the slot's own total).
+ * Suppressed = values the API hid below min_count; shown without a count so it can't be back-calculated.
+ */
 const sumBreakdown = (
   summary: SummaryResponse,
   slot: DemographicSlot,
@@ -60,14 +66,22 @@ const sumBreakdown = (
       counts.set(label, (counts.get(label) ?? 0) + sumCounts(value.studies));
   }
 
-  const rows = [...counts]
+  const rows: CategoryCount[] = [...counts]
     .map(([label, count]) => ({ label, count }))
     .sort((a, b) => b.count - a.count);
-  const notReported = participants - rows.reduce((sum, r) => sum + r.count, 0);
 
-  return notReported > 0
-    ? [...rows, { label: "Not reported", count: notReported }]
-    : rows;
+  const slotTotal = sumCounts(group.studies);
+  const shown = [...counts.values()].reduce((sum, c) => sum + c, 0);
+  if (slotTotal > shown)
+    rows.push({
+      label: `Other (fewer than ${summary.min_count} per study, not shown)`,
+      count: null,
+    });
+
+  const notReported = participants - slotTotal;
+  if (notReported > 0) rows.push({ label: "Not reported", count: notReported });
+
+  return rows;
 };
 
 /** Temporary: sums per-study counts until the endpoint returns global totals. */

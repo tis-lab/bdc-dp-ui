@@ -19,7 +19,7 @@ export type Race =
 
 export type Ethnicity = "HISPANIC_OR_LATINO" | "NOT_HISPANIC_OR_LATINO";
 
-export type ConditionStatus = "PRESENT" | "ABSENT" | "UNKNOWN";
+export type ConditionStatus = "PRESENT" | "HISTORICAL" | "ABSENT" | "UNKNOWN";
 
 export type ConditionProvenance = "PATIENT_SELF_REPORT";
 
@@ -53,6 +53,46 @@ export interface ClassSummary<V> {
   id: Curie;
   studies: StudyCount[];
   values: V[];
+}
+
+// ---------- Request: cohort expression ----------
+
+export type CriterionType =
+  | "CONDITION"
+  | "OBSERVATION"
+  | "DRUG_EXPOSURE"
+  | "PROCEDURE"
+  | "EXPOSURE";
+
+/** Status applies to conditions only. */
+export interface ConditionCriterion {
+  criterionType: "CONDITION";
+  concept: Curie;
+  status: ConditionStatus[];
+}
+
+export interface ConceptCriterion {
+  criterionType: Exclude<CriterionType, "CONDITION">;
+  concept: Curie;
+}
+
+export type Criterion = ConditionCriterion | ConceptCriterion;
+
+export type CriteriaNode = { criterion: Criterion } | { group: CriteriaGroup };
+
+export interface CriteriaGroup {
+  all?: CriteriaNode[];
+  any?: CriteriaNode[];
+  none?: CriteriaNode[];
+}
+
+export interface CohortExpression {
+  release: string;
+  criteria?: { group: CriteriaGroup };
+}
+
+export interface CohortSummaryVariables {
+  expression: CohortExpression;
 }
 
 // ---------- Study metadata ----------
@@ -218,3 +258,56 @@ export interface SummaryResponse {
 
 /** One demographic value of any slot: SexValue | RaceValue | EthnicityValue. */
 export type DemographicValue = DemographicSummary["values"][number];
+
+// query for cohort summary
+export const NESTED_SUMMARY_QUERY = `
+  query NestedSummary($expression: CohortExpressionInput!) {
+    summary(expression: $expression) {
+      release
+      focus
+      filter
+      min_count
+      terms
+      studies { research_study name participant_count }
+      summary {
+        demographics {
+          id summarized_slot
+          studies { research_study participant_count }
+          values {
+            id summarized_slot sex race ethnicity
+            studies { research_study participant_count }
+          }
+        }
+        conditions {
+          id condition_concept
+          studies { research_study participant_count }
+          values {
+            id condition_concept condition_status
+            studies { research_study participant_count }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export interface CohortSummaryData {
+  summary: SummaryResponse | null;
+}
+
+// query for available participants at landing
+export const AVAILABLE_PARTICIPANTS_QUERY = `
+  query AvailableParticipants($expression: CohortExpressionInput!) {
+    summary(expression: $expression) {
+      studies { research_study participant_count }
+    }
+  }
+`;
+
+export interface AvailableParticipantsData {
+  summary: {
+    studies: Pick<StudyTotal, "research_study" | "participant_count">[];
+  } | null;
+}
+
+export const RELEASE = "2026.10";

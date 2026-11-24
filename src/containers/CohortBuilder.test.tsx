@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CohortBuilder from "./CohortBuilder";
 import type { SearchItem } from "../api/graphql/queries/resolveTerms";
-import { t2dSummary } from "../mocks/SYNTHETIC.cohortSummary";
+import { legacyT2dSummary } from "../mocks/SYNTHETIC.legacyCohortSummary";
 import type { SummaryResponse } from "../api/graphql/queries/cohortSummary";
 import type { Criteria, CriteriaKind } from "../hooks/useCohortSummary";
 import {
@@ -13,6 +13,8 @@ import {
 const AVAILABLE = "2,000";
 
 const studiesOf = (...counts: number[]): SummaryResponse => ({
+  release: legacyT2dSummary.release,
+  min_count: legacyT2dSummary.min_count,
   studies: counts.map((participant_count, i) => ({
     research_study: `study_${i}`,
     participant_count,
@@ -30,7 +32,7 @@ const summaryFor = (filter: Record<string, unknown> | null) =>
       ? studiesOf(250, 200)
       : "or" in filter
         ? studiesOf(600, 600)
-        : t2dSummary;
+        : legacyT2dSummary;
 
 const mockHypertension: SearchItem = {
   __typename: "Term",

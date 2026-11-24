@@ -10,6 +10,8 @@ import {
 // jest.config.js maps echarts-for-react to src/test/echartsStub.tsx,
 // which lists each bar as "name: value"
 
+const SUPPRESSED_SEX = "Other (fewer than 10 per study, not shown)";
+
 describe("Demographics", () => {
   it("prompts for criteria, with no tabs, before there is a cohort", () => {
     render(<Demographics />);
@@ -63,7 +65,28 @@ describe("Demographics", () => {
     );
     expect(screen.getByText("Female: 480")).toBeInTheDocument();
     expect(screen.getByText("Male: 450")).toBeInTheDocument();
-    expect(screen.getByText("Not reported: 10")).toBeInTheDocument();
+  });
+
+  it("lists suppressed sex values as text, never as a bar or a number", () => {
+    render(<Demographics filteredSummary={t2dSummary} />);
+
+    // Shown as a plain line, not a "name: value" bar.
+    expect(screen.getByText(SUPPRESSED_SEX)).toBeInTheDocument();
+    expect(screen.queryByText(`${SUPPRESSED_SEX}: null`)).toBeNull();
+    // The hidden values are reported people, not missing ones, and their
+    // total (10) must not be shown in any form.
+    expect(screen.queryByText(/^Not reported/)).toBeNull();
+    expect(screen.queryByText(/: (null|NaN|0)$/)).toBeNull();
+  });
+
+  it("charts not-reported race as a bar, since it has a real count", async () => {
+    const user = userEvent.setup();
+    render(<Demographics filteredSummary={t2dSummary} />);
+
+    await user.click(screen.getByRole("tab", { name: "Race" }));
+
+    expect(screen.getByText("Not reported: 15")).toBeInTheDocument();
+    expect(screen.queryByText(/not shown/)).toBeNull();
   });
 
   it("switches to race and ethnicity", async () => {

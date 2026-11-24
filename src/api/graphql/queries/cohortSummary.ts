@@ -22,12 +22,16 @@ export interface StudySummary {
 }
 
 export interface SummaryResponse {
+  release: string;
+  min_count: number;
   studies: StudySummary[];
 }
 
 export const COHORT_SUMMARY_QUERY = `
   query GetSummary($filter: SummaryFilterInput) {
     summary(filter: $filter) {
+      release
+      min_count
       studies {
         research_study
         participant_count

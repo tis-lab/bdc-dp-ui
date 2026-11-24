@@ -8,6 +8,7 @@ import {
   type SummaryFilter,
 } from "../api/graphql/queries/cohortSummary";
 import { getQueryEndpoint } from "../api/queryEndpoint";
+import { toClassFirst } from "../mocks/toClassFirst";
 import { useFetch } from "../contexts/FetchContext";
 
 export type CriteriaKind = "include" | "exclude";
@@ -81,7 +82,8 @@ export const useCohortSummary = (criteria: Criteria) => {
         signal,
       });
       if (!data?.summary) throw new Error("Missing summary response");
-      return data.summary;
+      // TODO: remove toClassFirst after new endpoint is ready
+      return toClassFirst(data.summary, data.summary.min_count);
     },
     enabled: filter !== null,
   });

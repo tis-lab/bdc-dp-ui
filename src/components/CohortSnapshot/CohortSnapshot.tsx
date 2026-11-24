@@ -1,7 +1,7 @@
 import { useId, useMemo } from "react";
 import { Alert, AlertTitle, Typography, useTheme } from "@mui/material";
 import ReactEChartsCore from "echarts-for-react/lib/core";
-import type { SummaryResponse } from "../../api/graphql/queries/cohortSummary";
+import type { SummaryResponse } from "../../mocks/sampleSummaryResponse";
 import { ECHARTS_FILL, echarts } from "../../charts";
 import { cohortTotals, SUMMED_TOTALS_NOTE } from "../../utils/summary";
 import { MutedSkeleton } from "../LoadingSkeleton";
